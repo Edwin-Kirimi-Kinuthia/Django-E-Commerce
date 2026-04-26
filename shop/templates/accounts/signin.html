@@ -1,43 +1,44 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
 {% load crispy_forms_tags %}
 
-{% block metadescription %}
-	Sign in and enjoy the variety of stunning and comfy cushions.
-{% endblock %}
-
-{% block title %}
-	Login - The Perfect Cushion Store
-{% endblock %}
+{% block metadescription %}Sign in to your ShopMart account{% endblock %}
+{% block title %}Sign In — ShopMart{% endblock %}
 
 {% block content %}
-	<div class="container">
-		<br>
-		<h1 class="my_title text-center">Login or Create a New Account</h1>
-		<br>
-		<div class="row">
-			<div class="col-12 cold-sm-12 col-md-12 col-lg-6 text-center my_custom_div">
-				<br>
-				<h2 class="my_title">New Customer?</h2>
-				<br>
-				<p>When you create an account with us, you can see your order history.</p>
-				<br>
-				<a href="{% url 'signup' %}" class="btn btn-secondary">Create New Account</a>
-			</div>
-			<div class="col-12 cold-sm-12 col-md-12 col-lg-6 bg-light">
-				<div>
-					<br>
-					<h2 class="my_title">Registered Customers Only</h2>
-					<form method="post">
-						{% csrf_token %}
-						<p>{{ form | crispy }}</p>
-						<button type="submit" class="btn btn-secondary">Login</button>
-					</form>
-					<br>
-				</div>
-			</div>
-		</div>
-		<br>
-	</div>
-	<br>
+<div class="amz-auth-bg py-4">
+
+  <div class="amz-auth-logo">
+    <a href="{% url 'shop:allProdCat' %}">Shop<span>Mart</span></a>
+  </div>
+
+  <div class="amz-auth-box">
+    <h1>Sign in</h1>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form | crispy }}
+      <button type="submit" class="amz-btn-primary mt-2">
+        Continue
+      </button>
+    </form>
+
+    <div style="text-align:right;margin-top:8px;">
+      <a href="{% url 'password_reset' %}" style="font-size:13px;color:var(--amz-link);">Forgot your password?</a>
+    </div>
+
+    <p class="amz-terms mt-3">
+      By signing in you agree to ShopMart's
+      <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
+    </p>
+  </div>
+
+  <div class="amz-new-account-box mt-3">
+    <span style="color:var(--amz-muted);">New to ShopMart?</span>
+    <a href="{% url 'signup' %}" class="amz-btn-secondary-auth mt-2 d-block">
+      Create your ShopMart account
+    </a>
+  </div>
+
+</div>
 {% endblock %}

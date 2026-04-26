@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Address — ShopMart{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <a href="{% url 'accounts:profile' %}">My Account</a>
+    <span class="sep">&rsaquo;</span>
+    <a href="{% url 'accounts:addresses' %}">Addresses</a>
+    <span class="sep">&rsaquo;</span>
+    <span>{{ action }}</span>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-7">
+      <div class="amz-order-detail-box">
+        <h5 style="margin-bottom:18px;">{{ action }} Address</h5>
+        <form method="post">
+          {% csrf_token %}
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Address Type</label>
+            <select name="address_type" class="form-control">
+              <option value="shipping" {% if not address or address.address_type == 'shipping' %}selected{% endif %}>Shipping</option>
+              <option value="billing" {% if address and address.address_type == 'billing' %}selected{% endif %}>Billing</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Full Name</label>
+            <input type="text" name="full_name" class="form-control" value="{{ address.full_name|default:'' }}" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Address Line 1</label>
+            <input type="text" name="address_line1" class="form-control" value="{{ address.address_line1|default:'' }}" required>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Address Line 2 <span style="color:var(--amz-muted);font-weight:400;">(optional)</span></label>
+            <input type="text" name="address_line2" class="form-control" value="{{ address.address_line2|default:'' }}">
+          </div>
+          <div class="row">
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">City</label>
+              <input type="text" name="city" class="form-control" value="{{ address.city|default:'' }}" required>
+            </div>
+            <div class="col-6 col-sm-3 form-group">
+              <label style="font-size:13px;font-weight:600;">State/County</label>
+              <input type="text" name="state" class="form-control" value="{{ address.state|default:'' }}" maxlength="100">
+            </div>
+            <div class="col-6 col-sm-3 form-group">
+              <label style="font-size:13px;font-weight:600;">Postcode</label>
+              <input type="text" name="postcode" class="form-control" value="{{ address.postcode|default:'' }}" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Country</label>
+            <select name="country" class="form-control" required>
+              <option value="">Select country…</option>
+              <option value="United Kingdom" {% if address.country == 'United Kingdom' %}selected{% endif %}>United Kingdom</option>
+              <option value="United States" {% if address.country == 'United States' %}selected{% endif %}>United States</option>
+              <option value="Canada" {% if address.country == 'Canada' %}selected{% endif %}>Canada</option>
+              <option value="Australia" {% if address.country == 'Australia' %}selected{% endif %}>Australia</option>
+              <option value="Germany" {% if address.country == 'Germany' %}selected{% endif %}>Germany</option>
+              <option value="France" {% if address.country == 'France' %}selected{% endif %}>France</option>
+              <option value="Ireland" {% if address.country == 'Ireland' %}selected{% endif %}>Ireland</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" name="is_default" value="1" {% if address and address.is_default %}checked{% endif %} style="width:16px;height:16px;">
+              Set as default address for this type
+            </label>
+          </div>
+          <button type="submit" class="amz-btn-primary" style="width:auto;padding:9px 28px;border-radius:20px;">
+            {{ action }} Address
+          </button>
+          <a href="{% url 'accounts:addresses' %}" style="margin-left:12px;font-size:14px;color:var(--amz-link);">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

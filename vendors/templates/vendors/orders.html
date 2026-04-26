@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}
+
+{% block title %}My Orders — {{ vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+<div class="vendor-portal-layout">
+  {% include "vendors/_sidebar.html" %}
+
+  <div class="vendor-portal-main">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h1 class="amz-section-title" style="margin-bottom:0;">Orders Containing My Products</h1>
+    <!-- Filter by status -->
+    <form method="get" style="display:flex;gap:8px;align-items:center;">
+      <select name="status" onchange="this.form.submit()"
+              style="padding:6px 10px;border:1px solid var(--amz-border);border-radius:4px;font-size:13px;">
+        <option value="">All Statuses</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  {% if orders %}
+  <div class="amz-order-detail-box" style="padding:0;overflow:hidden;">
+    <table class="amz-order-items-table" style="margin:0;">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>My Items</th>
+          <th class="text-right">My Revenue</th>
+          <th class="text-center">Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        {% with my_items=order.items.all %}
+        <tr>
+          <td><a href="{% url 'vendors:order_detail' order.id %}" style="color:var(--amz-link);">#{{ order.id }}</a></td>
+          <td style="white-space:nowrap;">{{ order.created|date:"d M Y" }}</td>
+          <td>{{ order.billingName|default:"—" }}<br>
+            <span style="font-size:12px;color:var(--amz-muted);">{{ order.emailAddress }}</span>
+          </td>
+          <td style="font-size:13px;">
+            {% for item in my_items %}
+              {% if item.vendor_id == vendor.id %}
+                <div>{{ item.product }} ×{{ item.quantity }}</div>
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td class="text-right">
+            {% for item in my_items %}{% if item.vendor_id == vendor.id %}{% price item.price %}{% endif %}{% endfor %}
+          </td>
+          <td class="text-center">{% status_badge order.status %}</td>
+          <td>
+            <a href="{% url 'vendors:order_detail' order.id %}" class="amz-btn-primary" style="width:auto;padding:4px 12px;border-radius:4px;font-size:12px;">
+              Details
+            </a>
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if paginator.num_pages > 1 %}
+  <div class="amz-pagination">
+    {% if page_obj.has_previous %}<a href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a>{% endif %}
+    {% for num in paginator.page_range %}
+      {% if page_obj.number == num %}<span class="current">{{ num }}</span>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ num }}">{{ num }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="text-align:center;padding:48px;background:#fff;border:1px solid var(--amz-border);border-radius:4px;">
+    <div style="font-size:48px;color:#ddd;margin-bottom:12px;"><i class="fas fa-shopping-bag"></i></div>
+    <p style="font-size:14px;color:var(--amz-muted);">No orders yet.</p>
+  </div>
+  {% endif %}
+
+  </div><!-- /vendor-portal-main -->
+</div><!-- /vendor-portal-layout -->
+</div><!-- /container -->
+{% endblock %}

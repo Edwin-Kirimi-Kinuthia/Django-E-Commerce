@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Order Has Shipped — ShopMart</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f1f5f9; font-family: Arial, sans-serif; color: #1e293b; }
+    .wrap { max-width: 620px; margin: 32px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .header { background: linear-gradient(135deg, #065f46 0%, #059669 60%, #10b981 100%); padding: 28px 32px; text-align: center; }
+    .header h1 { color: #fff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: .5px; }
+    .header p { color: #a7f3d0; margin: 6px 0 0; font-size: 14px; }
+    .body { padding: 28px 32px; }
+    .ship-badge { background: #d1fae5; border-radius: 6px; padding: 16px 18px; margin-bottom: 22px; display: flex; align-items: center; gap: 12px; }
+    .ship-badge .icon { font-size: 28px; }
+    .ship-badge p { margin: 0; font-size: 14px; color: #065f46; }
+    .tracking-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #059669; border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; }
+    .tracking-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+    .tracking-box .value { font-size: 18px; font-weight: 700; color: #1e293b; letter-spacing: .04em; }
+    .tracking-box .carrier { font-size: 13px; color: #475569; margin-top: 4px; }
+    .btn { display: inline-block; background: #059669; color: #fff; text-decoration: none; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-top: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { background: #f8fafc; padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid #e2e8f0; }
+    .text-right { text-align: right; }
+    .addr-box { background: #f8fafc; border-radius: 6px; padding: 14px 16px; font-size: 13px; line-height: 1.7; margin-bottom: 20px; }
+    .addr-box strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 6px; }
+    .timeline { display: flex; margin-bottom: 20px; }
+    .tl-step { flex: 1; text-align: center; position: relative; }
+    .tl-step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: 50%; width: 100%; height: 2px; background: #e2e8f0; }
+    .tl-step.done:not(:last-child)::after { background: #059669; }
+    .tl-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 12px; position: relative; z-index: 1; color: #94a3b8; }
+    .tl-step.done .tl-dot { background: #059669; border-color: #059669; color: #fff; }
+    .tl-step.active .tl-dot { background: #1e293b; border-color: #1e293b; color: #fff; }
+    .tl-label { font-size: 11px; color: #94a3b8; font-weight: 500; }
+    .tl-step.done .tl-label { color: #059669; }
+    .tl-step.active .tl-label { color: #1e293b; font-weight: 700; }
+    .footer { background: #f8fafc; padding: 20px 32px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>ShopMart</h1>
+    <p>Your order is on its way! 🚚</p>
+  </div>
+
+  <div class="body">
+
+    <div class="ship-badge">
+      <div class="icon">📦</div>
+      <p><strong>Great news, {{ order.shippingName|default:order.billingName }}!</strong><br>
+         Your items from <strong>{{ shipment.vendor.name }}</strong> have been dispatched.</p>
+    </div>
+
+    <p style="font-size:14px;margin-bottom:16px;color:#64748b;">
+      Order <strong style="color:#1e1b4b;">#{{ order.id }}</strong> &nbsp;·&nbsp;
+      Placed on <strong>{{ order.created|date:"d M Y" }}</strong>
+    </p>
+
+    <!-- Order timeline -->
+    <div class="timeline">
+      <div class="tl-step done"><div class="tl-dot">✓</div><div class="tl-label">Confirmed</div></div>
+      <div class="tl-step active"><div class="tl-dot">✈</div><div class="tl-label">Shipped</div></div>
+      <div class="tl-step"><div class="tl-dot">🏠</div><div class="tl-label">Delivered</div></div>
+    </div>
+
+    <!-- Tracking info -->
+    {% if shipment.tracking_number %}
+    <div class="tracking-box">
+      <div class="label">Tracking Number</div>
+      <div class="value">{{ shipment.tracking_number }}</div>
+      <div class="carrier">via {{ shipment.carrier_display }}</div>
+      {% if shipment.tracking_url %}
+      <a href="{{ shipment.tracking_url }}" class="btn" style="margin-top:12px;">Track Your Package</a>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="tracking-box">
+      <div class="label">Shipped via</div>
+      <div class="value" style="font-size:15px;">{{ shipment.carrier_display }}</div>
+      {% if shipment.estimated_delivery %}
+      <div class="carrier">Estimated delivery: <strong>{{ shipment.estimated_delivery|date:"d M Y" }}</strong></div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if shipment.estimated_delivery and shipment.tracking_number %}
+    <p style="font-size:13px;color:#475569;margin-bottom:20px;">
+      Estimated delivery: <strong>{{ shipment.estimated_delivery|date:"d M Y" }}</strong>
+    </p>
+    {% endif %}
+
+    <!-- Items shipped -->
+    <table>
+      <thead>
+        <tr>
+          <th>Item Shipped</th>
+          <th class="text-right">Qty</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in shipped_items %}
+        <tr>
+          <td>{{ item.product }}</td>
+          <td class="text-right">{{ item.quantity }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Ship-to address -->
+    <div class="addr-box">
+      <strong>Shipping To</strong>
+      {{ order.shippingName }}<br>
+      {{ order.shippingAddress1 }}<br>
+      {{ order.shippingCity }}{% if order.shippingState %}, {{ order.shippingState }}{% endif %} {{ order.shippingPostcode }}<br>
+      {{ order.shippingCountry }}
+    </div>
+
+    <p style="font-size:14px;text-align:center;margin:0;">
+      Questions about your delivery?<br>
+      <a href="mailto:orders@shopmart.com" style="color:#059669;">orders@shopmart.com</a>
+    </p>
+
+  </div>
+
+  <div class="footer">
+    <p style="margin:0 0 8px;">Thank you for shopping with ShopMart!</p>
+    <p style="margin:0;">© ShopMart. All rights reserved.</p>
+  </div>
+
+</div>
+</body>
+</html>

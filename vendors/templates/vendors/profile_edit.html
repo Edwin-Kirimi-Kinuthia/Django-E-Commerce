@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Store Profile — {{ vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+<div class="vendor-portal-layout">
+  {% include "vendors/_sidebar.html" %}
+  <div class="vendor-portal-main">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'vendors:dashboard' %}">Dashboard</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Edit Profile</span>
+  </div>
+
+  {% if messages %}{% for msg in messages %}
+    <div class="amz-alert" style="margin-bottom:12px;background:#d1fae5;border-color:#059669;">{{ msg }}</div>
+  {% endfor %}{% endif %}
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8">
+      <div class="amz-order-detail-box">
+        <h5 style="margin-bottom:18px;">Store Profile</h5>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Store Name <span style="color:var(--amz-price-red);">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ vendor.name }}" required maxlength="250">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Description</label>
+            <textarea name="description" class="form-control" rows="4">{{ vendor.description }}</textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">Phone</label>
+              <input type="tel" name="phone" class="form-control" value="{{ vendor.phone }}">
+            </div>
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">Website</label>
+              <input type="url" name="website" class="form-control" value="{{ vendor.website }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Business Address</label>
+            <input type="text" name="address" class="form-control" value="{{ vendor.address }}">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">
+              Logo
+              {% if vendor.logo %}
+                <img src="{{ vendor.logo.url }}" alt="logo" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-left:8px;vertical-align:middle;">
+              {% endif %}
+            </label>
+            <input type="file" name="logo" class="form-control-file" accept="image/*">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">
+              Banner Image
+              {% if vendor.banner %}
+                <img src="{{ vendor.banner.url }}" alt="banner" style="width:120px;height:36px;object-fit:cover;border-radius:4px;margin-left:8px;vertical-align:middle;">
+              {% endif %}
+            </label>
+            <input type="file" name="banner" class="form-control-file" accept="image/*">
+            <small style="color:var(--amz-muted);">Recommended: 1200×300px</small>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:8px;">
+            <button type="submit" class="amz-btn-primary" style="width:auto;padding:9px 28px;border-radius:20px;">Save Changes</button>
+            <a href="{% url 'vendors:dashboard' %}" style="font-size:14px;color:var(--amz-link);align-self:center;">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /vendor-portal-main -->
+</div><!-- /vendor-portal-layout -->
+</div><!-- /container -->
+{% endblock %}

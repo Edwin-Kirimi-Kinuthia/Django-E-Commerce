@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Application Under Review — ShopMart{% endblock %}
+{% block content %}
+<div class="amz-container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-6" style="text-align:center;">
+      <div class="amz-order-detail-box">
+        <div style="font-size:56px;color:var(--amz-orange);margin-bottom:14px;"><i class="fas fa-hourglass-half"></i></div>
+        <h2 style="font-size:22px;font-weight:700;margin-bottom:8px;">Application Under Review</h2>
+        <p style="font-size:14px;color:var(--amz-muted);margin-bottom:6px;">
+          <strong>{{ vendor.name }}</strong> — submitted {{ vendor.created|date:"d M Y" }}
+        </p>
+        <p style="font-size:14px;color:var(--amz-muted);margin-bottom:20px;">
+          Our team is reviewing your application. You'll receive an email once approved.
+          This usually takes 1–2 business days.
+        </p>
+        <a href="{% url 'shop:allProdCat' %}" class="amz-btn-primary" style="width:auto;display:inline-block;padding:9px 24px;">
+          Continue Shopping
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

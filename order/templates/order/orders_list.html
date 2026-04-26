@@ -1,48 +1,68 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
+{% load shop_tags %}
 
-{% block metadescription %}
-	This is the Order History page. Here are all your orders with The Perfect Cushion Store.
-{% endblock %}
-
-{% block title %}
-	Order History - The Perfect Cushion Store
-{% endblock %}
+{% block metadescription %}Your ShopMart Order History{% endblock %}
+{% block title %}Your Orders — ShopMart{% endblock %}
 
 {% block content %}
-	<div>
-		<div class="text-center">
-			<br>
-			<h1 class="text-center my_title">Order History</h1>
-			<br>
-			{% if order_details %} <!-- checking if order details value is not none -->
-			<table class="table table-striped">
-				<thead>
-					<tr>
-						<th>Order Number</th>
-						<th>Order Date</th>
-						<th>Total Amount</th>
-						<th>Status</th>
-						<th>Action</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for order in order_details %} <!-- this for loop will bring the order id,date,total every time it runs --> 
-						<tr>
-							<td>{{ order.id }}</td>
-							<td>{{ order.created|date:"d M Y" }}</td>
-							<td>${{ order.total }}</td>
-							<td><i class="fas fa-check"></i>&nbsp;Complete</td> <!-- &nbsp is non break in space -->
-							<td><a href="{% url 'order:order_detail' order.id %}">View order</a></td>
-						</tr>
-					{% endfor %}
-				</tbody>
-			</table>			
-			{% else %}
-			<p>You have not placed any orders yet.<br><br><a href="{% url 'shop:allProdCat' %}" class="btn btn-secondary">Continue shopping</a></p>
-			{% endif %}
-		</div>
-	</div>
-	<br>
-	<br>
+<div class="amz-container py-3">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Your Orders</span>
+  </div>
+
+  <h1 class="amz-section-title">Your Orders</h1>
+
+  {% if order_details %}
+    <p style="font-size:14px;color:var(--amz-muted);margin-bottom:20px;">{{ order_details|length }} order{{ order_details|length|pluralize }}</p>
+
+    {% for order in order_details %}
+    <div class="amz-order-card">
+      <div class="amz-order-card-header">
+        <div class="oh-group">
+          <span class="oh-label">Order placed</span>
+          <span class="oh-value">{{ order.created|date:"d M Y" }}</span>
+        </div>
+        <div class="oh-group">
+          <span class="oh-label">Total</span>
+          <span class="oh-value">{% price order.total %}</span>
+        </div>
+        <div class="oh-group">
+          <span class="oh-label">Status</span>
+          <span class="oh-value">{% status_badge order.status %}</span>
+        </div>
+        <div class="oh-group ml-auto">
+          <span class="oh-label">Order #</span>
+          <a href="{% url 'order:order_detail' order.id %}" class="order-id-link">{{ order.id }}</a>
+        </div>
+      </div>
+      <div class="amz-order-card-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:14px;">
+          <span style="color:var(--amz-muted);">Shipped to:</span>
+          <strong> {{ order.shippingName|default:"—" }}</strong>
+        </div>
+        <a href="{% url 'order:order_detail' order.id %}" class="amz-btn-primary" style="width:auto;padding:8px 20px;border-radius:20px;font-size:13px;">
+          View Order Details
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+
+  {% else %}
+    <div style="background:#fff;border-radius:4px;padding:40px;text-align:center;border:1px solid var(--amz-border);">
+      <div style="font-size:56px;color:#ddd;margin-bottom:12px;"><i class="fas fa-box-open"></i></div>
+      <h2 style="font-size:20px;font-weight:400;margin-bottom:8px;">You haven't placed any orders yet</h2>
+      <p style="font-size:14px;color:var(--amz-muted);margin-bottom:20px;">
+        When you place an order, it will appear here.
+      </p>
+      <a href="{% url 'shop:allProdCat' %}" class="amz-btn-primary" style="width:auto;display:inline-block;padding:9px 24px;">
+        Continue Shopping
+      </a>
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

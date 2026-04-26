@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block metadescription %}Your ShopMart Account{% endblock %}
+{% block title %}My Account — ShopMart{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <span>My Account</span>
+  </div>
+
+  <div class="row">
+
+    <!-- Sidebar nav -->
+    <div class="col-12 col-md-3 mb-3">
+      <div class="amz-sidebar">
+        <div class="amz-sidebar-section">
+          <h6>Account</h6>
+          <a href="{% url 'accounts:profile' %}" style="font-weight:700;color:var(--amz-dark);">Profile</a>
+          <a href="{% url 'accounts:addresses' %}">My Addresses</a>
+          <a href="{% url 'order:order_history' %}">Order History</a>
+          <a href="{% url 'wishlist:wishlist' %}">Wishlist</a>
+          <a href="{% url 'accounts:change_password' %}">Change Password</a>
+          <a href="{% url 'signout' %}" style="color:var(--amz-price-red);">Sign Out</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile form -->
+    <div class="col-12 col-md-9">
+
+      {% if messages %}
+        {% for msg in messages %}
+          <div class="amz-alert" style="margin-bottom:16px;background:#d1fae5;border-color:#059669;">
+            <i class="fas fa-check-circle" style="color:#059669;margin-right:6px;"></i> {{ msg }}
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="amz-order-detail-box mb-3">
+        <h5 style="margin-bottom:16px;">Personal Information</h5>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-12 col-sm-6 form-group">
+              <label class="d-block" style="font-size:13px;font-weight:600;">First Name</label>
+              <input type="text" name="first_name" class="form-control" value="{{ request.user.first_name }}">
+            </div>
+            <div class="col-12 col-sm-6 form-group">
+              <label class="d-block" style="font-size:13px;font-weight:600;">Last Name</label>
+              <input type="text" name="last_name" class="form-control" value="{{ request.user.last_name }}">
+            </div>
+            <div class="col-12 form-group">
+              <label class="d-block" style="font-size:13px;font-weight:600;">Email</label>
+              <input type="email" name="email" class="form-control" value="{{ request.user.email }}" required>
+            </div>
+            <div class="col-12 col-sm-6 form-group">
+              <label class="d-block" style="font-size:13px;font-weight:600;">Phone</label>
+              <input type="tel" name="phone" class="form-control" value="{{ profile.phone }}">
+            </div>
+            <div class="col-12 col-sm-6 form-group">
+              <label class="d-block" style="font-size:13px;font-weight:600;">Date of Birth</label>
+              <input type="date" name="date_of_birth" class="form-control"
+                     value="{% if profile.date_of_birth %}{{ profile.date_of_birth|date:'Y-m-d' }}{% endif %}">
+            </div>
+            <div class="col-12 form-group">
+              <label class="d-block" style="font-size:13px;font-weight:600;">
+                Profile Photo
+                {% if profile.avatar %}
+                  <img src="{{ profile.avatar.url }}" alt="Avatar" style="width:36px;height:36px;border-radius:50%;object-fit:cover;margin-left:8px;vertical-align:middle;">
+                {% endif %}
+              </label>
+              <input type="file" name="avatar" class="form-control-file" accept="image/*">
+            </div>
+          </div>
+          <button type="submit" class="amz-btn-primary" style="width:auto;padding:9px 28px;border-radius:20px;">
+            Save Changes
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

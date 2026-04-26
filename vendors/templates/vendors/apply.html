@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Sell on ShopMart{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+
+  <!-- Hero banner -->
+  <div style="background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4c1d95 100%);border-radius:8px;padding:40px 32px;margin-bottom:28px;text-align:center;color:#fff;">
+    <h1 style="font-size:32px;font-weight:700;margin-bottom:8px;">Sell on ShopMart</h1>
+    <p style="font-size:16px;color:#c7d2fe;margin-bottom:20px;">Reach millions of customers. Set up your store in minutes.</p>
+    <div style="display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-size:14px;color:#e0e7ff;">
+      <span><i class="fas fa-check-circle" style="color:#a78bfa;margin-right:6px;"></i>Free to apply</span>
+      <span><i class="fas fa-check-circle" style="color:#a78bfa;margin-right:6px;"></i>Your own storefront</span>
+      <span><i class="fas fa-check-circle" style="color:#a78bfa;margin-right:6px;"></i>Integrated payments</span>
+      <span><i class="fas fa-check-circle" style="color:#a78bfa;margin-right:6px;"></i>Real-time dashboard</span>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-7">
+
+      {% if messages %}{% for msg in messages %}
+        <div class="amz-alert" style="margin-bottom:14px;{% if 'success' in msg.tags %}background:#d1fae5;border-color:#059669;{% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}{% endif %}
+
+      <div class="amz-order-detail-box">
+        <h2 style="font-size:20px;font-weight:700;margin-bottom:18px;">Create Your Store</h2>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Store Name <span style="color:var(--amz-price-red);">*</span></label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. TechZone UK" required maxlength="250">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Store Description</label>
+            <textarea name="description" class="form-control" rows="3" placeholder="Tell customers what you sell…"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">Phone</label>
+              <input type="tel" name="phone" class="form-control" placeholder="+44 7000 000000">
+            </div>
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">Website <span style="color:var(--amz-muted);font-weight:400;">(optional)</span></label>
+              <input type="url" name="website" class="form-control" placeholder="https://yoursite.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Business Address</label>
+            <input type="text" name="address" class="form-control" placeholder="123 Business Road, London">
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Store Logo <span style="color:var(--amz-muted);font-weight:400;">(optional, recommended 200×200)</span></label>
+            <input type="file" name="logo" class="form-control-file" accept="image/*">
+          </div>
+          <button type="submit" class="amz-btn-buy" style="margin-top:8px;padding:12px;font-size:15px;font-weight:700;">
+            <i class="fas fa-store mr-2"></i> Submit Application
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

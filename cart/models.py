@@ -1,29 +1,36 @@
 from django.db import models
-from shop.models import Product
+from django.contrib.auth.models import User
+from shop.models import Product, ProductVariant
+
 
 class Cart(models.Model):
-	cart_id = models.CharField(max_length=250, blank=True)
-	date_added = models.DateField(auto_now_add=True)
+    cart_id = models.CharField(max_length=250, blank=True)
+    date_added = models.DateField(auto_now_add=True)
 
-	class Meta:
-		db_table = 'Cart' #defining the name of the table
-		ordering = ['date_added']
+    class Meta:
+        db_table = 'Cart'
+        ordering = ['date_added']
 
-	def __str__(self):
-		return self.cart_id
+    def __str__(self):
+        return self.cart_id
 
 
 class CartItem(models.Model):
-	product = models.ForeignKey(Product, on_delete=models.CASCADE) #i.e if the product is deleted then any mention of that product is also deleted
-	cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-	quantity = models.IntegerField()
-	active = models.BooleanField(default=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.SET_NULL, null=True, blank=True)
+    quantity = models.IntegerField()
+    active = models.BooleanField(default=True)
 
-	class Meta:
-		db_table = 'CartItem'
+    class Meta:
+        db_table = 'CartItem'
 
-	def sub_total(self): #to calculate the total price 
-		return self.product.price * self.quantity
+    def sub_total(self):
+        price = self.product.effective_price
+        if self.variant_id and self.variant and self.variant.price_modifier:
+            price += self.variant.price_modifier
+        return price * self.quantity
 
-	def __str__(self):
-		return self.product
+    def __str__(self):
+        return self.product.name

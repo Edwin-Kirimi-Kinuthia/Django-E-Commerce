@@ -1,35 +1,256 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
+{% load shop_tags %}
 
-{% block metadescription %}
-	We have a variety of cushions. Look for the ones that suits your needs
-{% endblock %}
-
-{% block title %}
-	Search - Perfect Cushion Store
-{% endblock %}
+{% block metadescription %}Search results for "{{ query }}" on ShopMart{% endblock %}
+{% block title %}{{ query|default:"Search" }} — ShopMart{% endblock %}
 
 {% block content %}
-	<div>
-		<p class="text-center my_search_text "> You have searched for: <b>"{{ query }}"</b> </p>
-	</div>
-	<div class="container">
-		<div class="row mx-auto">
-			{% for product in products %}
-				<div class="my_bottom_margin col-9 col-sm-12 col-md-4 col-md-12 col-lg-4"> <!-- using custom class and bootstrap grid classes to change div and making category page more interactive -->
-					<div class="card text-center" style="min-width: 18rem;"> <!-- using bootstrap card classes to put all the products in cards -->
-						<a href="{{ product.get_url }}"> <img class="card-img-top my_image" src="{{product.image.url}}" alt="{{product.name}}" > </a> <!-- So that when we click on any product image in a specific category we can go to the products details --> <!-- in img tag the classes are used to store images inside the cards -->
-						<div class="card-body">
-						<h4>{{ product.name }}</h4>
-						<p> Rs{{product.price}} </p>
-						</div>
-					</div>
-				</div>
-				{% empty %}
-				<div class="row mx-auto">
-					<p class="text-center my_search_text">0 result found.</p>					
-				</div>
-			{% endfor %}
-		</div>
-	</div>
+<div class="amz-container py-3">
+
+  <!-- Breadcrumb -->
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Search Results</span>
+  </div>
+
+  <div class="row">
+
+    <!-- ── Sidebar ── -->
+    <div class="col-12 col-md-3 pr-md-3 mb-3">
+      <form method="get" action="{% url 'search_app:searchResult' %}" id="filter-form">
+        <input type="hidden" name="q" value="{{ query }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+
+        <div class="amz-sidebar">
+
+          <!-- Department -->
+          <div class="amz-sidebar-section">
+            <h6>Department</h6>
+            <a href="{% url 'shop:allProdCat' %}" class="{% if not category_slug %}fw-bold{% endif %}">All Products</a>
+            {% for cat in links %}
+              <a href="{% url 'search_app:searchResult' %}?q={{ query }}&category={{ cat.slug }}{% if sort %}&sort={{ sort }}{% endif %}"
+                 class="{% if category_slug == cat.slug %}fw-bold{% endif %}">
+                {{ cat.name }}
+              </a>
+            {% endfor %}
+          </div>
+
+          <!-- Price -->
+          <div class="amz-sidebar-section">
+            <h6>Price</h6>
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}&max_price=50000{% if sort %}&sort={{ sort }}{% endif %}">Under TSh 50,000</a>
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}&min_price=50000&max_price=150000{% if sort %}&sort={{ sort }}{% endif %}">TSh 50,000 – 150,000</a>
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}&min_price=150000&max_price=300000{% if sort %}&sort={{ sort }}{% endif %}">TSh 150,000 – 300,000</a>
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}&min_price=300000{% if sort %}&sort={{ sort }}{% endif %}">Over TSh 300,000</a>
+            <div style="margin-top:10px;display:flex;gap:6px;align-items:center;">
+              <input type="number" name="min_price" placeholder="Min" value="{{ min_price }}"
+                     min="0" step="1" style="width:80px;padding:4px 6px;border:1px solid var(--amz-border);border-radius:4px;font-size:13px;">
+              <span style="font-size:12px;color:var(--amz-muted);">–</span>
+              <input type="number" name="max_price" placeholder="Max" value="{{ max_price }}"
+                     min="0" step="1" style="width:80px;padding:4px 6px;border:1px solid var(--amz-border);border-radius:4px;font-size:13px;">
+              <button type="submit" style="padding:4px 8px;background:var(--amz-green);border:none;border-radius:4px;cursor:pointer;font-size:12px;color:#fff;">Go</button>
+            </div>
+          </div>
+
+          <!-- Customer Rating -->
+          <div class="amz-sidebar-section">
+            <h6>Customer Rating</h6>
+            {% for r in "4321" %}
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}&min_rating={{ r }}{% if sort %}&sort={{ sort }}{% endif %}"
+               class="{% if min_rating == r %}fw-bold{% endif %}" style="display:flex;align-items:center;gap:4px;">
+              {% star_rating r %} &amp; Up
+            </a>
+            {% endfor %}
+          </div>
+
+          <!-- In Stock -->
+          <div class="amz-sidebar-section">
+            <h6>Availability</h6>
+            <label style="font-size:14px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              <input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}
+                     onchange="this.form.submit()" style="width:16px;height:16px;">
+              In Stock Only
+            </label>
+          </div>
+
+          <!-- Brand -->
+          {% if all_brands %}
+          <div class="amz-sidebar-section">
+            <h6>Brand</h6>
+            {% for b in all_brands %}
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}&brand={{ b }}{% if sort %}&sort={{ sort }}{% endif %}"
+               class="{% if brand == b %}fw-bold{% endif %}">
+              {{ b }}
+            </a>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+        </div>
+      </form>
+    </div>
+
+    <!-- ── Results ── -->
+    <div class="col-12 col-md-9">
+
+      <!-- Result count + sort bar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <div class="amz-search-query" style="margin-bottom:0;">
+          {% if query %}
+            <strong>{{ result_count }}</strong> result{{ result_count|pluralize }} for "<em>{{ query }}</em>"
+          {% else %}
+            <strong>{{ result_count }}</strong> product{{ result_count|pluralize }}
+          {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+          <span style="color:var(--amz-muted);">Sort by:</span>
+          <select onchange="window.location.href=this.value"
+                  style="padding:5px 8px;border:1px solid var(--amz-border);border-radius:4px;font-size:13px;cursor:pointer;">
+            {% with base_url=request.path %}
+            <option value="{% url 'search_app:searchResult' %}?q={{ query }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}&sort=relevance" {% if sort == 'relevance' %}selected{% endif %}>Relevance</option>
+            <option value="{% url 'search_app:searchResult' %}?q={{ query }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}&sort=price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+            <option value="{% url 'search_app:searchResult' %}?q={{ query }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}&sort=price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+            <option value="{% url 'search_app:searchResult' %}?q={{ query }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}&sort=newest" {% if sort == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+            <option value="{% url 'search_app:searchResult' %}?q={{ query }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}&sort=rating" {% if sort == 'rating' %}selected{% endif %}>Avg. Customer Review</option>
+            <option value="{% url 'search_app:searchResult' %}?q={{ query }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}&sort=name" {% if sort == 'name' %}selected{% endif %}>Name (A–Z)</option>
+            {% endwith %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Active filter chips -->
+      {% if min_price or max_price or category_slug or in_stock or min_rating or brand %}
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+        <span style="font-size:13px;color:var(--amz-muted);align-self:center;">Active filters:</span>
+        {% if category_slug %}
+          <span class="amz-filter-chip">
+            Category: {{ category_slug }}
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}{% if sort %}&sort={{ sort }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}" style="margin-left:4px;color:inherit;">&times;</a>
+          </span>
+        {% endif %}
+        {% if min_price or max_price %}
+          <span class="amz-filter-chip">
+            Price: {% if min_price %}{{ currency_symbol }}{{ min_price }}{% else %}{{ currency_symbol }}0{% endif %} – {% if max_price %}{{ currency_symbol }}{{ max_price }}{% else %}any{% endif %}
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}{% if sort %}&sort={{ sort }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}" style="margin-left:4px;color:inherit;">&times;</a>
+          </span>
+        {% endif %}
+        {% if min_rating %}
+          <span class="amz-filter-chip">
+            {{ min_rating }}★ &amp; Up
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}{% if sort %}&sort={{ sort }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}" style="margin-left:4px;color:inherit;">&times;</a>
+          </span>
+        {% endif %}
+        {% if in_stock %}
+          <span class="amz-filter-chip">
+            In Stock
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}{% if sort %}&sort={{ sort }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}{% if brand %}&brand={{ brand }}{% endif %}" style="margin-left:4px;color:inherit;">&times;</a>
+          </span>
+        {% endif %}
+        {% if brand %}
+          <span class="amz-filter-chip">
+            Brand: {{ brand }}
+            <a href="{% url 'search_app:searchResult' %}?q={{ query }}{% if sort %}&sort={{ sort }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}" style="margin-left:4px;color:inherit;">&times;</a>
+          </span>
+        {% endif %}
+        <a href="{% url 'search_app:searchResult' %}?q={{ query }}" style="font-size:13px;color:var(--amz-link);align-self:center;">Clear all</a>
+      </div>
+      {% endif %}
+
+      {% if products %}
+      <div class="row row-cols-2 row-cols-sm-3 row-cols-xl-4 g-4 card-grid">
+        {% for product in products %}
+        <div class="col d-flex">
+          <article class="product-card w-100">
+            <a href="{{ product.get_url }}" class="text-decoration-none text-dark">
+              <div class="card__img">
+                {% if product.discount_price %}<span class="card__badge">-{{ product.get_percent_discount }}%</span>{% endif %}
+                {% if product.image %}
+                  <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                {% else %}
+                  <img src="{% static 'img/no-image.svg' %}" alt="{{ product.name }}">
+                {% endif %}
+              </div>
+            </a>
+            <a href="{{ product.get_url }}" class="card__name">{{ product.name }}</a>
+            <div class="card__content">
+              <a href="{{ product.get_url }}" class="card__description">{{ product.name }}</a>
+              {% if product.brand %}<p class="card__specification">by {{ product.brand }}</p>{% endif %}
+              {% star_rating product.avg_rating %}
+              {% if product.num_reviews > 0 %}<span class="review-count">({{ product.num_reviews }})</span>{% endif %}
+              <div class="card__stock {% if product.is_low_stock %}low-stock{% elif product.stock == 0 %}out-of-stock-label{% endif %}">
+                {% if product.stock > 0 %}
+                  {% if product.is_low_stock %}Low Stock: {{ product.stock }} left
+                  {% else %}In Stock: {{ product.stock }} available{% endif %}
+                {% else %}Out of Stock{% endif %}
+              </div>
+            </div>
+            <div class="card__precis">
+              <div class="card__price">
+                <span class="card__preci card__preci--now">{% price product.effective_price %}</span>
+                {% if product.discount_price %}
+                  <span class="card__preci card__preci--before">{% price product.price %}</span>
+                  <span class="card__discount">-{{ product.get_percent_discount }}%</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="card__actions">
+              {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'wishlist:toggle' product.id %}" style="display:contents;">{% csrf_token %}
+                  <button type="submit" class="card__icon" title="Wishlist"><ion-icon name="heart-outline"></ion-icon></button>
+                </form>
+              {% else %}
+                <a href="{% url 'signin' %}" class="card__icon" title="Sign in to wishlist"><ion-icon name="heart-outline"></ion-icon></a>
+              {% endif %}
+              <a href="{% url 'cart:add_cart' product.id %}" class="card__icon {% if product.stock == 0 %}disabled{% endif %}" title="Add to cart"><ion-icon name="cart-outline"></ion-icon></a>
+              <a href="{{ product.get_url }}" class="card__icon" title="View product">
+                <ion-icon name="eye-outline"></ion-icon>
+              </a>
+            </div>
+          </article>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if paginator.num_pages > 1 %}
+      <div class="amz-pagination">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">&laquo; Prev</a>
+        {% endif %}
+        {% for num in paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="current">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?q={{ query }}&page={{ num }}{% if sort %}&sort={{ sort }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <a href="?q={{ query }}&page={{ page_obj.next_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if in_stock %}&in_stock=1{% endif %}{% if brand %}&brand={{ brand }}{% endif %}{% if min_rating %}&min_rating={{ min_rating }}{% endif %}">Next &raquo;</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="amz-no-results">
+        <h2>No results{% if query %} for <em style="color:var(--amz-price-red);">"{{ query }}"</em>{% endif %}</h2>
+        <p style="font-size:14px;color:var(--amz-muted);margin-bottom:16px;">
+          {% if min_price or max_price or category_slug or in_stock or min_rating or brand %}
+            Try adjusting your filters or <a href="{% url 'search_app:searchResult' %}?q={{ query }}">clear all filters</a>.
+          {% else %}
+            Try checking your spelling, using different keywords, or <a href="{% url 'shop:allProdCat' %}">browse all products</a>.
+          {% endif %}
+        </p>
+        <ul style="font-size:14px;color:var(--amz-muted);text-align:left;max-width:360px;margin:0 auto;">
+          <li>Use more general keywords</li>
+          <li>Check spelling</li>
+          <li>Try searching by category</li>
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
 {% endblock %}

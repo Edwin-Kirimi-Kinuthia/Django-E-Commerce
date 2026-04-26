@@ -1,3 +1,60 @@
-<div class="footer navbar-fixed-bottom my_footer">
-	<p class="text-center">&copy; This E-Commerce site is made by Sarthak Kumar. For any queries contact me on my email id ksarthak4ever@gmail.com</p>
-</div>
+{% load static %}
+<footer class="amz-footer">
+
+  <!-- Back to top -->
+  <div class="amz-footer-back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    Back to top
+  </div>
+
+  <!-- Main footer links -->
+  <div class="amz-footer-main">
+    <div class="container">
+      <div class="row">
+        <div class="col-6 col-sm-3 amz-footer-col mb-4">
+          <h6>Get to Know Us</h6>
+          <a href="#">About ShopMart</a>
+          <a href="#">Careers</a>
+          <a href="#">Press Releases</a>
+          <a href="#">ShopMart Science</a>
+        </div>
+        <div class="col-6 col-sm-3 amz-footer-col mb-4">
+          <h6>Make Money with Us</h6>
+          <a href="#">Sell products on ShopMart</a>
+          <a href="#">Become an Affiliate</a>
+          <a href="#">Advertise Your Products</a>
+          <a href="#">Self-Publish with Us</a>
+        </div>
+        <div class="col-6 col-sm-3 amz-footer-col mb-4">
+          <h6>ShopMart Payment Products</h6>
+          <a href="#">ShopMart Business Card</a>
+          <a href="#">Shop with Points</a>
+          <a href="#">Reload Your Balance</a>
+          <a href="#">ShopMart Currency Converter</a>
+        </div>
+        <div class="col-6 col-sm-3 amz-footer-col mb-4">
+          <h6>Let Us Help You</h6>
+          <a href="#">ShopMart and COVID-19</a>
+          <a href="#">Your Account</a>
+          <a href="{% url 'order:order_history' %}">Your Orders</a>
+          <a href="#">Shipping Rates &amp; Policies</a>
+          <a href="#">Help</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div class="amz-footer-bottom">
+    <div class="container" style="display:flex;justify-content:center;align-items:center;gap:20px;flex-wrap:wrap;">
+      <a href="{% url 'shop:allProdCat' %}" class="amz-footer-logo-sm">Shop<span>Mart</span></a>
+      <a href="#">Conditions of Use</a>
+      <a href="#">Privacy Notice</a>
+      <a href="#">Interest-Based Ads</a>
+      <span style="color:#777;">&copy; {% now "Y" %} ShopMart. All rights reserved.</span>
+    </div>
+    <div class="container" style="text-align:center;padding-top:10px;font-size:12px;color:#999;">
+      Developed by <strong style="color:#bbb;">Dr. Edwin Kirimi Kinuthia</strong>
+    </div>
+  </div>
+
+</footer>

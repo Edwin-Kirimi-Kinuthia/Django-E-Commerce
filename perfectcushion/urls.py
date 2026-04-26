@@ -1,46 +1,54 @@
-"""perfectcushion URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/2.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from shop import views
-from django.conf import settings #importing settings 
-from django.conf.urls.static import static #importing static after settings so we can map the static and media urls
-
 
 urlpatterns = [
-
+    # Admin
     path('admin/', admin.site.urls),
 
-    path('cart/',include('cart.urls')),
+    # REST API v1
+    path('api/v1/', include('api.urls')),
 
+    # Account management
+    path('account/', include('accounts.urls')),
+    path('account/create/', views.signupView, name='signup'),
+    path('account/login/', views.signinView, name='signin'),
+    path('account/logout/', views.signoutView, name='signout'),
+
+    # Password reset (Django built-in)
+    path('account/password-reset/',
+         auth_views.PasswordResetView.as_view(template_name='accounts/password_reset.html'),
+         name='password_reset'),
+    path('account/password-reset/done/',
+         auth_views.PasswordResetDoneView.as_view(template_name='accounts/password_reset_done.html'),
+         name='password_reset_done'),
+    path('account/password-reset/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(template_name='accounts/password_reset_confirm.html'),
+         name='password_reset_confirm'),
+    path('account/password-reset/complete/',
+         auth_views.PasswordResetCompleteView.as_view(template_name='accounts/password_reset_complete.html'),
+         name='password_reset_complete'),
+
+    # Vendors
+    path('vendors/', include('vendors.urls')),
+
+    # Wishlist
+    path('wishlist/', include('wishlist.urls')),
+
+    # Cart & Orders
+    path('cart/', include('cart.urls')),
     path('order/', include('order.urls')),
 
-    path('account/create/', views.signupView, name = 'signup'),
+    # Search
+    path('search/', include('search_app.urls')),
 
-    path('account/login/', views.signinView, name = 'signin'),
-
-    path('account/logout/', views.signoutView, name = 'signout'),
-
-    path('search/',include('search_app.urls')), 
-
-    path('', include('shop.urls')), #Creating the patterns like this because if we put shop app first then django can get confused during the searching of products as it reads urlpatterns top to bottom which can lead to 404 page not found.
-
+    # Shop (keep last — catches slugs)
+    path('', include('shop.urls')),
 ]
 
-
-if settings.DEBUG: #mapping static and media url when debug is enabled 
-	urlpatterns += static(settings.STATIC_URL,document_root=settings.STATIC_ROOT)
-	urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}
+
+{% block title %}Seller Dashboard — {{ vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+<div class="vendor-portal-layout">
+  {% include "vendors/_sidebar.html" %}
+
+  <div class="vendor-portal-main">
+
+  <!-- Stats cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+
+    <div class="amz-stat-card" style="border-left-color:#4f46e5;">
+      <div class="stat-label">Revenue (30d)</div>
+      <div class="stat-value">{% price stats.revenue_30d %}</div>
+    </div>
+    <div class="amz-stat-card" style="border-left-color:#059669;">
+      <div class="stat-label">Orders (30d)</div>
+      <div class="stat-value">{{ stats.orders_30d }}</div>
+    </div>
+    <div class="amz-stat-card" style="border-left-color:#f59e0b;">
+      <div class="stat-label">Active Products</div>
+      <div class="stat-value">{{ stats.active_products }}</div>
+    </div>
+    <div class="amz-stat-card" style="border-left-color:{% if stats.low_stock > 0 %}#dc2626{% else %}#64748b{% endif %};">
+      <div class="stat-label">Low Stock</div>
+      <div class="stat-value" style="color:{% if stats.low_stock > 0 %}#dc2626{% else %}inherit{% endif %};">{{ stats.low_stock }}</div>
+    </div>
+    <div class="amz-stat-card" style="border-left-color:#f59e0b;">
+      <div class="stat-label">Rating</div>
+      <div class="stat-value">
+        {% star_rating stats.avg_rating %}
+        <span style="font-size:13px;color:var(--amz-muted);">({{ stats.review_count }})</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick links -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+    <a href="{% url 'vendors:product_list' %}" class="amz-btn-primary" style="width:auto;padding:8px 18px;border-radius:4px;font-size:13px;">
+      <i class="fas fa-box mr-1"></i> My Products
+    </a>
+    <a href="{% url 'vendors:product_add' %}" class="amz-btn-buy" style="width:auto;padding:8px 18px;border-radius:4px;font-size:13px;">
+      <i class="fas fa-plus mr-1"></i> Add Product
+    </a>
+    <a href="{% url 'vendors:orders' %}" class="amz-btn-cart" style="width:auto;padding:8px 18px;border-radius:4px;font-size:13px;">
+      <i class="fas fa-shopping-bag mr-1"></i> My Orders
+    </a>
+  </div>
+
+  <!-- Recent orders -->
+  <div class="amz-order-detail-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h5 style="margin:0;">Recent Orders</h5>
+      <a href="{% url 'vendors:orders' %}" style="font-size:13px;color:var(--amz-link);">View all</a>
+    </div>
+    {% if recent_orders %}
+    <table class="amz-order-items-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th class="text-right">Total</th>
+          <th class="text-center">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td><a href="{% url 'vendors:order_detail' order.id %}" style="color:var(--amz-link);">#{{ order.id }}</a></td>
+          <td>{{ order.created|date:"d M Y" }}</td>
+          <td>{{ order.billingName|default:"—" }}</td>
+          <td class="text-right">{% price order.total %}</td>
+          <td class="text-center">{% status_badge order.status %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="font-size:14px;color:var(--amz-muted);">No orders yet.</p>
+    {% endif %}
+  </div><!-- /recent orders box -->
+
+  </div><!-- /vendor-portal-main -->
+</div><!-- /vendor-portal-layout -->
+</div><!-- /container -->
+{% endblock %}

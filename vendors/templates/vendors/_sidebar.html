@@ -1,0 +1,42 @@
+{% load static %}
+<div class="vendor-sidebar">
+  <!-- Vendor identity -->
+  <div class="vsb-identity">
+    {% if vendor.logo %}
+      <img src="{{ vendor.logo.url }}" alt="{{ vendor.name }}" class="vsb-logo">
+    {% else %}
+      <div class="vendor-logo-placeholder vsb-logo-placeholder">{{ vendor.name|slice:":1"|upper }}</div>
+    {% endif %}
+    <div>
+      <div class="vsb-name">{{ vendor.name }}</div>
+      <span class="vsb-badge">Approved Seller</span>
+    </div>
+  </div>
+
+  <!-- Nav links -->
+  <nav class="vsb-nav">
+    <a href="{% url 'vendors:dashboard' %}"
+       class="vsb-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <a href="{% url 'vendors:product_list' %}"
+       class="vsb-link {% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-box"></i> My Products
+    </a>
+    <a href="{% url 'vendors:product_add' %}"
+       class="vsb-link {% if request.resolver_match.url_name == 'product_add' %}active{% endif %}" style="padding-left:2.2rem;font-size:12px;">
+      <i class="fas fa-plus"></i> Add Product
+    </a>
+    <a href="{% url 'vendors:orders' %}"
+       class="vsb-link {% if 'order' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-shopping-bag"></i> Orders
+    </a>
+    <a href="{% url 'vendors:profile_edit' %}"
+       class="vsb-link {% if request.resolver_match.url_name == 'profile_edit' %}active{% endif %}">
+      <i class="fas fa-user-cog"></i> Store Settings
+    </a>
+    <a href="{% url 'vendors:storefront' vendor.slug %}" class="vsb-link" target="_blank">
+      <i class="fas fa-store"></i> View Storefront <i class="fas fa-external-link-alt" style="font-size:10px;"></i>
+    </a>
+  </nav>
+</div>

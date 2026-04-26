@@ -1,134 +1,101 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
+{% load shop_tags %}
 
-{% block metadescription %}
-	This is the shopping cart page. Proceed to review your items and place the order.
-{% endblock %}
-
-{% block title %}
-	Cart - The Perfect Cushion Store
-{% endblock %}
+{% block metadescription %}Your ShopMart Shopping Cart{% endblock %}
+{% block title %}Shopping Cart — ShopMart{% endblock %}
 
 {% block content %}
+<div class="amz-container py-3">
 
-	<!-- Title Block -->
+  <!-- Breadcrumb -->
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Shopping Cart</span>
+  </div>
 
-	{% if not cart_items %} <!-- Checking if there are items in the cart or not -->
-		<div>
-			<div class="text-center">
-				<br>
-				<h1 class="text-center my_title">
-					Your shopping cart is empty
-				</h1>
-				<br>
-				<p class="text-center">
-					Please click <a href="{% url 'shop:allProdCat' %}">here</a> to continue shopping.
-				</p>
-			</div>
-		</div>
-	{% else %}
-		<div>
-			<div class="text-center">
-				<br>
-				<h1 class="text-center my_title">
-					Your shopping cart
-				</h1>
-				<br>
-			</div>
-		</div>
+  <div class="row">
 
-		<!-- Your Items Block -->
+    <!-- ── Cart Items ── -->
+    <div class="col-12 col-lg-9 mb-3">
+      <div class="amz-cart-main">
 
-		<div class="row mx-auto">
-			<div class="col-12 col-sm-12 col-md-12 col-lg-6 text-center">
-				<table class="table my_custom_table">
-					<thead class="my_custom_thead">
-						<tr>
-							<th colspan="5">
-								Your items
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for cart_item in cart_items %}
-						<tr>
-							<td>
-								<a href="{{ cart_item.product.get_url }}"><img src="{{ cart_item.product.image.url }}" alt="" class="float-left rounded custom_image"></a>
-							</td>
-							<td class="text-left">
-								{{ cart_item.product.name }}
-								<br>
-								SKU: {{ cart_item.product.id }}
-								<br>
-								Unit Price: Rs{{ cart_item.product.price }}
-								<br>
-								Qty: {{ cart_item.quantity }} x Rs{{ cart_item.product.price }}
-							</td>
-							<td>
-								${{ cart_item.sub_total }}
-							</td>
-							{% if cart_item.quantity < cart_item.product.stock %} <!-- if product still in stock after adding then + icon keep on showing -->
-								<td>
-									<!-- Getting the icons using i tags from fontawesome tookit of css -->
-									<a href="{% url 'cart:add_cart' cart_item.product.id %}" class="custom_a"><i class="fas fa-plus-circle custom_icon"></i></a>&nbsp;<a href="{% url 'cart:cart_remove' cart_item.product.id %}" class="custom_a"><i class="fas fa-minus-circle custom_icon"></i></a>&nbsp;<a href="{% url 'cart:full_remove' cart_item.product.id %}" class="custom_a"><i class="fas fa-trash-alt custom_icon"></i></a>
-								</td>
-							{% else %}
-								<td>
-									&nbsp;<a href="{% url 'cart:cart_remove' cart_item.product.id %}" class="custom_a"><i class="fas fa-minus-circle custom_icon"></i></a>&nbsp;<a href="{% url 'cart:full_remove' cart_item.product.id %}" class="custom_a"><i class="fas fa-trash-alt custom_icon"></i></a>
-								</td>
-								<td></td>
-							{% endif %}
-						</tr>
-					{% endfor %}
-					</tbody>
-				</table>
-			</div>	
+        {% if not cart_items %}
+          <h1 class="amz-cart-title">Your ShopMart Cart is empty</h1>
+          <p style="font-size:14px;margin-top:12px;">
+            Your shopping cart lives here. <a href="{% url 'shop:allProdCat' %}">Shop today's deals</a> and add items to get started.
+          </p>
+          <img src="{% static 'img/banner.jpg' %}" alt="Shop deals" style="max-height:200px;object-fit:cover;width:100%;border-radius:4px;margin-top:16px;">
+        {% else %}
+          <h1 class="amz-cart-title">Shopping Cart</h1>
 
-			<!-- Checkout Block -->
+          {% for cart_item in cart_items %}
+          <div class="amz-cart-item">
+            <a href="{{ cart_item.product.get_url }}">
+              {% if cart_item.product.image %}
+                <img src="{{ cart_item.product.image.url }}" alt="{{ cart_item.product.name }}" class="amz-cart-item-img">
+              {% else %}
+                <img src="{% static 'img/no-image.svg' %}" alt="{{ cart_item.product.name }}" class="amz-cart-item-img">
+              {% endif %}
+            </a>
+            <div class="amz-cart-item-body">
+              <div class="amz-cart-item-name">
+                <a href="{{ cart_item.product.get_url }}">{{ cart_item.product.name }}</a>
+              </div>
+              {% if cart_item.product.brand %}
+                <div style="font-size:13px;color:var(--amz-muted);margin-bottom:4px;">by {{ cart_item.product.brand }}</div>
+              {% endif %}
+              <div class="amz-cart-item-stock">In Stock</div>
+              <div class="amz-cart-item-price">{% price cart_item.sub_total %}</div>
+              <div style="font-size:13px;color:var(--amz-muted);margin-bottom:8px;">
+                Qty: {{ cart_item.quantity }} × {% price cart_item.product.effective_price %}
+              </div>
+              <div class="amz-cart-item-actions">
+                {% if cart_item.quantity < cart_item.product.stock %}
+                  <a href="{% url 'cart:add_cart' cart_item.product.id %}"><i class="fas fa-plus"></i> Add</a>
+                {% endif %}
+                <a href="{% url 'cart:cart_remove' cart_item.product.id %}"><i class="fas fa-minus"></i> Remove one</a>
+                <a href="{% url 'cart:full_remove' cart_item.product.id %}" style="color:var(--amz-price-red);"><i class="fas fa-trash-alt"></i> Delete</a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
 
-			<div class="col-12 col-sm-12 col-md-12 col-lg-6 text-center">
-				<table class="table my_custom_table">
-					<thead class="my_custom_thead">
-						<tr>
-							<th>
-								Checkout
-							</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>
-								Please review your shopping cart items before proceeding with the order payment.
-							</td>
-						</tr>
-						<tr>
-							<td class="text-left">
-								Your total is: <strong>Rs{{ total }}</strong>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			<div class="mx-auto">
-				<!-- from stripe->payment->quickstart documentation with some changes-->
-				<form action="" method="POST">
-				  {% csrf_token %}
-				  <script
-				    src="https://checkout.stripe.com/checkout.js" class="stripe-button"
-				    data-key="{{ data_key }}"
-				    data-amount="{{ stripe_total }}"
-				    data-name="Perfect_Cushion_Store"
-				    data-description="{{ description }}"
-				    data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
-				    data-locale="auto"
-				    data-currency="gbp"
-				    data-shipping-address="true"
-				    data-billing-address="true"
-				    data-zip-code="true">
-				  </script>
-				</form>
-				<a href="{% url 'shop:allProdCat' %}" class="btn btn-secondary btn-block my_custom_button">Continue Shopping</a>
-			</div>
-		</div>
-		<br>
-	{% endif %}
+          <div class="amz-cart-subtotal">
+            Subtotal ({{ cart_items|length }} item{{ cart_items|length|pluralize }}):
+            <strong>{% price total %}</strong>
+          </div>
+        {% endif %}
+
+      </div>
+    </div><!-- /cart items -->
+
+    <!-- ── Order Summary ── -->
+    {% if cart_items %}
+    <div class="col-12 col-lg-3">
+      <div class="amz-cart-summary">
+        <div class="summary-total">
+          Subtotal ({{ cart_items|length }} item{{ cart_items|length|pluralize }}):
+          <strong>{% price total %}</strong>
+        </div>
+
+        <a href="{% url 'cart:checkout' %}" class="amz-btn-buy" style="display:block;text-align:center;padding:10px;border-radius:4px;font-size:15px;font-weight:600;text-decoration:none;">
+          <i class="fas fa-lock mr-1"></i> Proceed to Checkout
+        </a>
+
+        <a href="{% url 'shop:allProdCat' %}" style="font-size:13px;color:var(--amz-link);display:block;text-align:center;margin-top:10px;">
+          <i class="fas fa-arrow-left"></i> Continue Shopping
+        </a>
+
+        <hr style="margin:14px 0 10px;">
+        <div style="font-size:12px;color:var(--amz-muted);text-align:center;">
+          <i class="fas fa-lock"></i> Secure checkout powered by Stripe
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
 {% endblock %}

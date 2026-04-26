@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}
+
+{% block title %}{{ vendor.name }} — ShopMart Seller{% endblock %}
+{% block metadescription %}{{ vendor.description|truncatewords:30|default:vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+
+  <!-- Vendor Hero -->
+  <div class="vendor-hero">
+    {% if vendor.banner %}
+      <img src="{{ vendor.banner.url }}" class="vendor-hero-banner" alt="{{ vendor.name }} banner">
+    {% else %}
+      <div class="vendor-hero-banner vendor-hero-banner-default"></div>
+    {% endif %}
+    <div class="vendor-hero-overlay">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div class="vendor-hero-logo">
+          {% if vendor.logo %}
+            <img src="{{ vendor.logo.url }}" alt="{{ vendor.name }} logo">
+          {% else %}
+            <div class="vendor-logo-placeholder" style="width:80px;height:80px;font-size:32px;">{{ vendor.name|slice:":1"|upper }}</div>
+          {% endif %}
+        </div>
+        <div>
+          <h1 style="color:#fff;font-size:26px;font-weight:700;margin:0 0 4px;">{{ vendor.name }}</h1>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              {% star_rating vendor.average_rating %}
+              <span style="color:#e2e8f0;font-size:13px;margin-left:4px;">{{ vendor.average_rating }} ({{ vendor.review_count }} review{{ vendor.review_count|pluralize }})</span>
+            </div>
+            <span style="color:#e2e8f0;font-size:13px;">|  {{ vendor.product_count }} product{{ vendor.product_count|pluralize }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if vendor.description %}
+  <div style="background:#fff;border:1px solid var(--amz-border);border-radius:4px;padding:14px 18px;margin-bottom:16px;font-size:14px;color:var(--amz-muted);">
+    {{ vendor.description }}
+    {% if vendor.website %}
+      &nbsp;·&nbsp; <a href="{{ vendor.website }}" target="_blank" rel="noopener" style="color:var(--amz-link);">{{ vendor.website }}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Sort bar -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:14px;color:var(--amz-muted);">{{ vendor.product_count }} product{{ vendor.product_count|pluralize }}</span>
+    <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+      <span style="color:var(--amz-muted);">Sort:</span>
+      <select onchange="window.location.href=this.value"
+              style="padding:5px 8px;border:1px solid var(--amz-border);border-radius:4px;font-size:13px;">
+        <option value="?sort=newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+        <option value="?sort=price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+        <option value="?sort=price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+        <option value="?sort=name" {% if sort == 'name' %}selected{% endif %}>Name A–Z</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Products grid -->
+  {% if products %}
+  <div class="row row-cols-2 row-cols-sm-3 row-cols-xl-4 g-4 card-grid mb-4">
+    {% for product in products %}
+    <div class="col d-flex">
+      <article class="product-card w-100">
+        <a href="{{ product.get_url }}" class="text-decoration-none text-dark">
+          <div class="card__img">
+            {% if product.discount_price %}<span class="card__badge">-{{ product.get_percent_discount }}%</span>{% endif %}
+            {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% else %}<img src="{% static 'img/no-image.svg' %}" alt="{{ product.name }}">{% endif %}
+          </div>
+        </a>
+        <a href="{{ product.get_url }}" class="card__name">{{ product.name }}</a>
+        <div class="card__content">
+          <a href="{{ product.get_url }}" class="card__description">{{ product.name }}</a>
+          {% star_rating product.average_rating %}
+          {% if product.review_count %}<span class="review-count">({{ product.review_count }})</span>{% endif %}
+          <div class="card__stock {% if product.is_low_stock %}low-stock{% elif product.stock == 0 %}out-of-stock-label{% endif %}">
+            {% if product.stock > 0 %}
+              {% if product.is_low_stock %}Low Stock: {{ product.stock }} left
+              {% else %}In Stock: {{ product.stock }} available{% endif %}
+            {% else %}Out of Stock{% endif %}
+          </div>
+        </div>
+        <div class="card__precis">
+          <div class="card__price">
+            <span class="card__preci card__preci--now">{% price product.effective_price %}</span>
+            {% if product.discount_price %}
+              <span class="card__preci card__preci--before">{% price product.price %}</span>
+              <span class="card__discount">-{{ product.get_percent_discount }}%</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card__actions">
+          {% if request.user.is_authenticated %}
+            <form method="post" action="{% url 'wishlist:toggle' product.id %}" style="display:contents;">{% csrf_token %}
+              <button type="submit" class="card__icon" title="Wishlist"><ion-icon name="heart-outline"></ion-icon></button>
+            </form>
+          {% else %}
+            <a href="{% url 'signin' %}" class="card__icon" title="Wishlist"><ion-icon name="heart-outline"></ion-icon></a>
+          {% endif %}
+          <a href="{% url 'cart:add_cart' product.id %}" class="card__icon {% if product.stock == 0 %}disabled{% endif %}" title="Add to cart"><ion-icon name="cart-outline"></ion-icon></a>
+          <a href="{{ product.get_url }}" class="card__icon" title="View product"><ion-icon name="eye-outline"></ion-icon></a>
+        </div>
+      </article>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if paginator.num_pages > 1 %}
+  <div class="amz-pagination">
+    {% if page_obj.has_previous %}<a href="?sort={{ sort }}&page={{ page_obj.previous_page_number }}">&laquo;</a>{% endif %}
+    {% for num in paginator.page_range %}
+      {% if page_obj.number == num %}<span class="current">{{ num }}</span>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?sort={{ sort }}&page={{ num }}">{{ num }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?sort={{ sort }}&page={{ page_obj.next_page_number }}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- Vendor Reviews -->
+  <div class="amz-order-detail-box mt-3" id="reviews">
+    <h3 style="font-size:20px;font-weight:700;margin-bottom:14px;">Seller Feedback</h3>
+
+    {% for review in reviews %}
+    <div class="amz-review">
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px;">{{ review.user.get_full_name|default:review.user.username }}</div>
+      <div style="margin-bottom:4px;">{% star_rating review.rating %}
+        {% if review.title %}<strong style="font-size:14px;margin-left:8px;">{{ review.title }}</strong>{% endif %}
+      </div>
+      <div class="review-meta">{{ review.created|date:"d M Y" }}</div>
+      <p class="review-body mt-2">{{ review.body }}</p>
+    </div>
+    {% empty %}
+    <p style="font-size:14px;color:var(--amz-muted);">No reviews yet.</p>
+    {% endfor %}
+
+    {% if user.is_authenticated %}
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--amz-border);">
+      <h4 style="font-size:15px;font-weight:700;margin-bottom:12px;">Leave Seller Feedback</h4>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label style="font-size:13px;font-weight:600;">Rating</label>
+          <div class="amz-star-picker" style="display:flex;gap:6px;font-size:22px;margin-top:4px;">
+            {% for i in "12345" %}
+            <label data-val="{{ i }}">
+              <input type="radio" name="rating" value="{{ i }}" required style="display:none;">
+              <i class="fas fa-star"></i>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label style="font-size:13px;font-weight:600;">Headline <span style="font-weight:400;color:var(--amz-muted);">(optional)</span></label>
+          <input type="text" name="title" class="form-control" placeholder="Sum it up…" maxlength="250">
+        </div>
+        <div class="form-group">
+          <label style="font-size:13px;font-weight:600;">Your Experience</label>
+          <textarea name="body" class="form-control" rows="3" required placeholder="How was your experience with this seller?"></textarea>
+        </div>
+        <button type="submit" class="amz-btn-primary" style="width:auto;padding:8px 22px;border-radius:20px;">Submit Feedback</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

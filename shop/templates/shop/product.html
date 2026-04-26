@@ -1,41 +1,449 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
+{% load shop_tags %}
 
-{% block metadescription %}
-	{{ product.description | truncatewords:155 }}
-{% endblock %}
-
-{% block title %}
-	{{ product.name }} - Perfect Cushion Store
-{% endblock %}
+{% block metadescription %}{{ product.description|truncatewords:155 }}{% endblock %}
+{% block title %}{{ product.name }} — ShopMart{% endblock %}
 
 {% block content %}
-	<div class="row my_prod_row_class">
-		<div class="mx-auto">
-			<p><a href="{% url 'shop:allProdCat' %}">Home</a> | <a href="{{ product.category.get_url }}">{{ product.category }}</a> | {{product.name}} </p>
-		</div>
-		<div class="container">
-			<br>
-			<div class="row">
-				<div class="col-12 col-sm-12 col-md-12 col-lg-6 text-center"> <!-- the col classes are bootstrap classes for grid layout and making product page more interactive i.e when we change the chrome page size --> 
-					<div style="min-width: 18rem">
-						<img src="{{product.image.url}}" alt="{{ product.name }}" >
-					</div>
-				</div>
-				<div class="col-12 col-sm-12 col-md-12 col-lg-6">
-					<div>
-						<h1 class="my_prod_title">{{product.name}}</h1>
-						<p>Rs.{{product.price}}</p>
-						<p class="my_title"> Product Description </p>
-						<p class="text-justify my_prod_text">{{product.description}}</p>
-						{% if product.stock <= 0 %}
-							<p class="text-justify my_prod_text"><b>Out of Stock</b></p>
-						{% else %}
-							<a class="btn btn-secondary" href="{% url 'cart:add_cart' product.id %}">Add to Cart</a>
-						{% endif %}
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+<div class="amz-container py-3">
+
+  <!-- Breadcrumb -->
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <a href="{{ product.category.get_url }}">{{ product.category.name }}</a>
+    <span class="sep">&rsaquo;</span>
+    <span>{{ product.name }}</span>
+  </div>
+
+  <div class="row">
+
+    <!-- ── Thumbnail Rail ── -->
+    <div class="col-2 d-none d-md-flex flex-column" style="gap:6px;">
+      {% if product.image %}
+        <img src="{{ product.image.url }}"
+             class="amz-thumb active"
+             data-full="{{ product.image.url }}"
+             alt="{{ product.name }}">
+      {% endif %}
+      {% for img in product.images.all %}
+        {% if img.image %}
+        <img src="{{ img.image.url }}"
+             class="amz-thumb"
+             data-full="{{ img.image.url }}"
+             alt="{{ img.alt_text|default:product.name }}">
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- ── Main Image + Zoom Panel ── -->
+    <div class="col-12 col-md-4 mb-3 position-relative">
+      <div class="amz-zoom-wrap" id="zoom-wrap">
+        {% if product.image %}
+          <img id="main-product-image" src="{{ product.image.url }}"
+               alt="{{ product.name }}" class="amz-main-image">
+        {% else %}
+          <img id="main-product-image" src="{% static 'img/no-image.svg' %}"
+               alt="{{ product.name }}" class="amz-main-image">
+        {% endif %}
+        <div class="amz-zoom-lens" id="zoom-lens"></div>
+      </div>
+      <!-- Zoom result panel (positioned absolutely via JS) -->
+      <div class="amz-zoom-result" id="zoom-result"></div>
+
+      <!-- Mobile thumbnail strip -->
+      {% if product.images.exists %}
+      <div class="d-flex flex-wrap gap-1 mt-2 d-md-none" style="justify-content:center;">
+        {% if product.image %}
+          <img src="{{ product.image.url }}" class="amz-thumb active"
+               data-full="{{ product.image.url }}" alt="{{ product.name }}">
+        {% endif %}
+        {% for img in product.images.all %}{% if img.image %}
+          <img src="{{ img.image.url }}" class="amz-thumb"
+               data-full="{{ img.image.url }}" alt="">
+        {% endif %}{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── Product Info ── -->
+    <div class="col-12 col-md-4 mb-3">
+      <div class="amz-detail-wrap">
+
+        {% if product.brand %}
+          <div class="amz-brand-link"><a href="?brand={{ product.brand }}">{{ product.brand }}</a></div>
+        {% endif %}
+
+        <h1 class="amz-product-title">{{ product.name }}</h1>
+
+        {% if product.vendor %}
+          <div style="margin-bottom:8px;">
+            <a href="{{ product.vendor.get_absolute_url }}" class="vendor-badge">
+              {% if product.vendor.logo %}<img src="{{ product.vendor.logo.url }}" alt="{{ product.vendor.name }}">{% endif %}
+              <i class="fas fa-store" style="font-size:11px;"></i> {{ product.vendor.name }}
+            </a>
+          </div>
+        {% endif %}
+
+        <!-- Rating -->
+        <div class="amz-rating-row">
+          {% star_rating product.average_rating %}
+          <a href="#reviews" class="review-link">{{ product.review_count }} rating{{ product.review_count|pluralize }}</a>
+          {% if product.sku %}<span style="color:var(--amz-muted);">SKU: {{ product.sku }}</span>{% endif %}
+        </div>
+
+        <!-- Price (currency-aware) -->
+        <div class="amz-price-section">
+          <div class="price-label">Price:</div>
+          <div id="detail-price">
+            <span class="price-main" id="price-display">{% price product.effective_price %}</span>
+          </div>
+          {% if product.discount_price %}
+            <div class="was-price">Was: <s>{% price product.price %}</s></div>
+          {% endif %}
+        </div>
+
+        <hr>
+
+        {% if product.description %}
+        <div class="amz-desc-block">
+          <strong style="font-size:14px;">About this item</strong>
+          <p class="mt-2">{{ product.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- ── Variant Selectors ── -->
+        {% if variant_groups %}
+        <hr>
+        <div id="variant-section">
+          {% for group_name, variants in variant_groups.items %}
+          <div class="amz-variant-group" style="margin-bottom:14px;">
+            <div class="amz-variant-label">
+              {{ group_name }}: <strong id="selected-{{ group_name|slugify }}">—</strong>
+            </div>
+
+            {% if group_name == "Color" %}
+            <!-- Colour swatches -->
+            <div class="amz-swatch-row">
+              {% for v in variants %}
+              <button type="button"
+                      class="amz-swatch"
+                      data-group="{{ group_name }}"
+                      data-value="{{ v.value }}"
+                      data-variant-id="{{ v.id }}"
+                      data-modifier="{{ v.price_modifier }}"
+                      data-stock="{{ v.stock }}"
+                      title="{{ v.value }}"
+                      style="background:{{ v.value|lower }};">
+              </button>
+              {% endfor %}
+            </div>
+
+            {% else %}
+            <!-- Size / other option buttons -->
+            <div class="amz-size-row">
+              {% for v in variants %}
+              <button type="button"
+                      class="amz-size-btn {% if v.stock == 0 %}out-of-stock{% endif %}"
+                      data-group="{{ group_name }}"
+                      data-value="{{ v.value }}"
+                      data-variant-id="{{ v.id }}"
+                      data-modifier="{{ v.price_modifier }}"
+                      data-stock="{{ v.stock }}">
+                {{ v.value }}
+                {% if v.stock == 0 %}<span class="size-oos-bar"></span>{% endif %}
+              </button>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Specs + Attributes -->
+        {% if product.brand or product.weight or product.sku or product.attributes.exists %}
+        <hr>
+        <table class="amz-spec-table">
+          {% if product.brand %}<tr><td>Brand</td><td>{{ product.brand }}</td></tr>{% endif %}
+          {% if product.sku %}<tr><td>SKU</td><td>{{ product.sku }}</td></tr>{% endif %}
+          {% if product.weight %}<tr><td>Weight</td><td>{{ product.weight }} kg</td></tr>{% endif %}
+          {% for attr in product.attributes.all %}
+            <tr><td>{{ attr.name }}</td><td>{{ attr.value }}</td></tr>
+          {% endfor %}
+        </table>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- ── Buy Box ── -->
+    <div class="col-12 col-md-12 col-lg-2 mb-3 order-md-last">
+      <div class="amz-buy-box">
+        <div class="box-price" id="box-price-display">{% price product.effective_price %}</div>
+
+        {% if product.discount_price %}
+          <div style="font-size:13px;color:var(--amz-muted);margin-bottom:8px;">
+            <s>{% price product.price %}</s> &mdash; <span style="color:var(--amz-price-red);">Save!</span>
+          </div>
+        {% endif %}
+
+        <div class="box-stock" id="box-stock">
+          {% if product.stock > 10 %}
+            <span class="amz-stock-in"><i class="fas fa-check-circle"></i> In Stock</span>
+          {% elif product.stock > 0 %}
+            <span class="amz-stock-low"><i class="fas fa-exclamation-circle"></i> Only {{ product.stock }} left</span>
+          {% else %}
+            <span class="amz-stock-out"><i class="fas fa-times-circle"></i> Out of Stock</span>
+          {% endif %}
+        </div>
+
+        <div class="box-row"><span>Ships from</span><span>ShopMart</span></div>
+        <div class="box-row" style="margin-bottom:14px;"><span>Sold by</span>
+          <span>{% if product.vendor %}{{ product.vendor.name }}{% else %}ShopMart{% endif %}</span>
+        </div>
+
+        <!-- Add to cart — posts variant_id if selected -->
+        <form id="add-cart-form" action="{% url 'cart:add_cart' product.id %}" method="get">
+          <input type="hidden" name="variant_id" id="selected-variant-id" value="">
+          {% if product.stock > 0 %}
+            <button type="submit" class="amz-btn-cart" id="btn-add-cart">
+              <i class="fas fa-shopping-cart mr-1"></i> Add to Cart
+            </button>
+          {% else %}
+            <button type="button" class="amz-btn-cart" disabled style="opacity:.5;cursor:not-allowed;">
+              Add to Cart
+            </button>
+          {% endif %}
+        </form>
+
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'wishlist:toggle' product.id %}" style="margin-top:8px;">
+          {% csrf_token %}
+          <button type="submit"
+                  style="width:100%;background:none;border:1px solid {% if is_wishlisted %}var(--amz-price-red){% else %}var(--amz-border){% endif %};border-radius:4px;padding:7px;font-size:13px;cursor:pointer;color:var(--amz-text);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <i class="{% if is_wishlisted %}fas{% else %}far{% endif %} fa-heart" style="color:var(--amz-price-red);"></i>
+            {% if is_wishlisted %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}
+          </button>
+        </form>
+        {% endif %}
+
+        <div style="font-size:12px;color:var(--amz-link);text-align:center;margin-top:8px;">
+          <i class="fas fa-lock"></i> Secure transaction
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+
+  <!-- ── Reviews ── -->
+  <div class="row mt-3" id="reviews">
+    <div class="col-12 col-md-8">
+      <div class="amz-detail-wrap">
+        <h3 style="font-size:22px;font-weight:700;margin-bottom:6px;">Customer Reviews</h3>
+
+        {% if product.review_count > 0 %}
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--amz-border);">
+            <div style="font-size:48px;font-weight:300;">{{ product.average_rating }}</div>
+            <div>
+              {% star_rating product.average_rating %}
+              <div style="font-size:13px;color:var(--amz-muted);">{{ product.review_count }} global rating{{ product.review_count|pluralize }}</div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if messages %}
+          {% for msg in messages %}
+            <div class="amz-alert" style="background:#d1fae5;border-color:#059669;margin-bottom:12px;">
+              <i class="fas fa-check-circle" style="color:#059669;margin-right:6px;"></i> {{ msg }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% for review in product.reviews.all %}
+        <div class="amz-review">
+          <div style="font-weight:700;font-size:14px;margin-bottom:2px;">
+            {{ review.user.get_full_name|default:review.user.username }}
+          </div>
+          <div style="margin-bottom:4px;">
+            {% star_rating review.rating %}
+            {% if review.title %}<strong style="font-size:14px;margin-left:8px;">{{ review.title }}</strong>{% endif %}
+          </div>
+          <div class="review-meta">Reviewed on {{ review.created|date:"d M Y" }}</div>
+          {% if review.is_verified_purchase %}
+            <div class="review-verified"><i class="fas fa-check-circle"></i> Verified Purchase</div>
+          {% endif %}
+          <p class="review-body mt-2">{{ review.body }}</p>
+        </div>
+        {% empty %}
+        <p style="font-size:14px;color:var(--amz-muted);padding:16px 0;">
+          No customer reviews yet. Be the first to write one!
+        </p>
+        {% endfor %}
+
+        {% if user.is_authenticated %}
+        <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--amz-border);">
+          <h4 style="font-size:16px;font-weight:700;margin-bottom:14px;">Write a Customer Review</h4>
+          <form method="post" action="{% url 'shop:submit_review' product.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+              <label style="font-size:13px;font-weight:600;">Rating</label>
+              <div class="amz-star-picker" style="display:flex;gap:6px;font-size:24px;margin-top:4px;">
+                {% for i in "12345" %}
+                <label data-val="{{ i }}">
+                  <input type="radio" name="rating" value="{{ i }}" required style="display:none;">
+                  <i class="fas fa-star"></i>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="form-group">
+              <label style="font-size:13px;font-weight:600;">Headline <span style="color:var(--amz-muted);font-weight:400;">(optional)</span></label>
+              <input type="text" name="title" class="form-control" placeholder="Sum it up in a few words…" maxlength="250">
+            </div>
+            <div class="form-group">
+              <label style="font-size:13px;font-weight:600;">Your Review</label>
+              <textarea name="body" class="form-control" rows="4" placeholder="What did you like or dislike?" required></textarea>
+            </div>
+            <button type="submit" class="amz-btn-primary" style="width:auto;padding:9px 24px;border-radius:20px;">
+              Submit Review
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <p style="font-size:14px;color:var(--amz-muted);margin-top:16px;padding-top:16px;border-top:1px solid var(--amz-border);">
+          <a href="{% url 'signin' %}">Sign in</a> to write a review.
+        </p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  // ── Thumbnail switching ──────────────────────────────────────────────────
+  var mainImg = document.getElementById('main-product-image');
+  document.querySelectorAll('.amz-thumb').forEach(function(thumb) {
+    thumb.addEventListener('click', function() {
+      if (!mainImg) return;
+      mainImg.src = this.dataset.full;
+      document.querySelectorAll('.amz-thumb').forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+      // Update zoom result background
+      var zr = document.getElementById('zoom-result');
+      if (zr) zr.style.backgroundImage = 'url(' + mainImg.src + ')';
+    });
+  });
+
+  // ── Hover zoom (Amazon magnifier style) ──────────────────────────────────
+  var wrap   = document.getElementById('zoom-wrap');
+  var lens   = document.getElementById('zoom-lens');
+  var result = document.getElementById('zoom-result');
+  var ZOOM   = 2.5;
+
+  if (wrap && lens && result && mainImg) {
+    function updateZoom(e) {
+      var rect  = wrap.getBoundingClientRect();
+      var lw    = lens.offsetWidth;
+      var lh    = lens.offsetHeight;
+      var x     = e.clientX - rect.left - lw / 2;
+      var y     = e.clientY - rect.top  - lh / 2;
+      x = Math.max(0, Math.min(x, rect.width  - lw));
+      y = Math.max(0, Math.min(y, rect.height - lh));
+      lens.style.left = x + 'px';
+      lens.style.top  = y + 'px';
+
+      result.style.backgroundSize   = (rect.width * ZOOM) + 'px ' + (rect.height * ZOOM) + 'px';
+      result.style.backgroundPosition = '-' + (x * ZOOM) + 'px -' + (y * ZOOM) + 'px';
+    }
+
+    wrap.addEventListener('mouseenter', function() {
+      result.style.backgroundImage = 'url(' + mainImg.src + ')';
+      lens.style.display   = 'block';
+      result.style.display = 'block';
+    });
+    wrap.addEventListener('mousemove', updateZoom);
+    wrap.addEventListener('mouseleave', function() {
+      lens.style.display   = 'none';
+      result.style.display = 'none';
+    });
+  }
+
+  // ── Variant selection ────────────────────────────────────────────────────
+  var basePrice    = parseFloat('{{ product.effective_price }}');
+  var currencyRate = parseFloat('{{ currency_rate }}');
+  var currencySym  = '{{ currency_symbol }}';
+
+  function formatPrice(gbp) {
+    var converted = gbp * currencyRate;
+    if (converted === Math.floor(converted) && currencyRate > 50) {
+      return currencySym + Math.floor(converted).toLocaleString();
+    }
+    return currencySym + converted.toFixed(2);
+  }
+
+  function updatePriceDisplay(modifier) {
+    var newPrice = basePrice + parseFloat(modifier || 0);
+    var formatted = formatPrice(newPrice);
+    var priceEl = document.getElementById('price-display');
+    var boxEl   = document.getElementById('box-price-display');
+    if (priceEl) priceEl.innerHTML = formatted;
+    if (boxEl)   boxEl.innerHTML   = formatted;
+  }
+
+  document.querySelectorAll('.amz-size-btn, .amz-swatch').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var group = this.dataset.group;
+      // Deselect others in same group
+      document.querySelectorAll('[data-group="' + group + '"]').forEach(function(b) {
+        b.classList.remove('selected');
+      });
+      this.classList.add('selected');
+
+      // Update label
+      var lbl = document.getElementById('selected-' + group.toLowerCase().replace(/\s+/g, '-'));
+      if (lbl) lbl.textContent = this.dataset.value;
+
+      // Update hidden variant input
+      document.getElementById('selected-variant-id').value = this.dataset.variantId;
+
+      // Update price
+      updatePriceDisplay(this.dataset.modifier);
+
+      // Update stock indicator
+      var stock = parseInt(this.dataset.stock);
+      var stockEl = document.getElementById('box-stock');
+      if (stockEl) {
+        if (stock > 10)       stockEl.innerHTML = '<span class="amz-stock-in"><i class="fas fa-check-circle"></i> In Stock</span>';
+        else if (stock > 0)   stockEl.innerHTML = '<span class="amz-stock-low"><i class="fas fa-exclamation-circle"></i> Only ' + stock + ' left</span>';
+        else                  stockEl.innerHTML = '<span class="amz-stock-out"><i class="fas fa-times-circle"></i> Out of Stock</span>';
+      }
+    });
+  });
+
+  // ── Star rating picker ───────────────────────────────────────────────────
+  document.querySelectorAll('.amz-star-picker').forEach(function(picker) {
+    var labels = picker.querySelectorAll('label');
+    labels.forEach(function(lbl, idx) {
+      lbl.addEventListener('mouseenter', function() {
+        labels.forEach(function(l, i) { l.classList.toggle('hovered', i <= idx); });
+      });
+      lbl.addEventListener('mouseleave', function() {
+        labels.forEach(function(l) { l.classList.remove('hovered'); });
+      });
+      lbl.addEventListener('click', function() {
+        lbl.querySelector('input').checked = true;
+        labels.forEach(function(l, i) { l.classList.toggle('selected', i <= idx); });
+      });
+    });
+  });
+})();
+</script>
 {% endblock %}

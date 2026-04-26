@@ -1,6 +1,154 @@
-{% load staticfiles %}
-<header>
-	<center>
-		<a href="{% url 'shop:allProdCat' %}"><img src="{% static 'img/logo.png' %}" alt="Perfect Cushion Store"></a> <!-- Note logo image should be available at the specified static/img/logo.png directory otherwise Perfect Cushion will appear in space of logo -->
-	</center>
+{% load static %}
+<header class="amz-header">
+
+  <!-- ── Top Row ── -->
+  <div class="amz-header-main">
+
+    <!-- Logo -->
+    <a href="{% url 'shop:allProdCat' %}" class="amz-logo">
+      <span class="amz-logo-text">Shop<span class="dot">Mart</span></span>
+    </a>
+
+    <!-- Deliver to (hidden on mobile) -->
+    <div class="amz-deliver d-none d-lg-block">
+      <i class="fas fa-map-marker-alt" style="color:var(--amz-muted);"></i>
+      <span class="d-label"> Deliver to</span>
+      <strong class="d-block d-value">Tanzania 🇹🇿</strong>
+    </div>
+
+    <!-- Search bar -->
+    <form class="amz-search-form" action="{% url 'search_app:searchResult' %}" method="GET">
+      <div class="amz-search-bar">
+        <select name="category" title="Select a category">
+          <option value="">All</option>
+          {% for cat in links %}
+            <option value="{{ cat.slug }}">{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="q" placeholder="Search ShopMart" autocomplete="off" value="{{ request.GET.q }}">
+        <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+      </div>
+    </form>
+
+    <!-- Currency + Language pickers -->
+    <div class="amz-locale-bar d-none d-lg-flex align-items-center" style="gap:4px;">
+
+      <!-- Currency picker -->
+      <div class="dropdown">
+        <button class="amz-locale-btn dropdown-toggle" data-toggle="dropdown" title="Change currency">
+          {{ currency_flag }} {{ currency_code }}
+        </button>
+        <div class="dropdown-menu" style="min-width:220px;max-height:320px;overflow-y:auto;">
+          <h6 class="dropdown-header" style="font-size:11px;">Select Currency</h6>
+          {% for code, sym, flag, label in all_currencies %}
+            <a class="dropdown-item{% if code == currency_code %} active{% endif %}"
+               href="{% url 'shop:set_currency' %}?code={{ code }}">
+              {{ flag }} {{ code }} — {{ sym }} {{ label }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Language picker -->
+      <div class="dropdown">
+        <button class="amz-locale-btn dropdown-toggle" data-toggle="dropdown" title="Change language">
+          <i class="fas fa-globe"></i> {{ active_language|upper }}
+        </button>
+        <div class="dropdown-menu">
+          <h6 class="dropdown-header" style="font-size:11px;">Language</h6>
+          <a class="dropdown-item{% if active_language == 'en' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=en">🇬🇧 English</a>
+          <a class="dropdown-item{% if active_language == 'fr' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=fr">🇫🇷 Français</a>
+          <a class="dropdown-item{% if active_language == 'de' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=de">🇩🇪 Deutsch</a>
+          <a class="dropdown-item{% if active_language == 'es' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=es">🇪🇸 Español</a>
+          <a class="dropdown-item{% if active_language == 'it' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=it">🇮🇹 Italiano</a>
+          <a class="dropdown-item{% if active_language == 'pt' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=pt">🇵🇹 Português</a>
+          <a class="dropdown-item{% if active_language == 'hi' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=hi">🇮🇳 हिन्दी</a>
+          <a class="dropdown-item{% if active_language == 'ja' %} active{% endif %}" href="{% url 'shop:set_language' %}?lang=ja">🇯🇵 日本語</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right-side links -->
+    <div class="amz-header-right">
+
+      <!-- Account dropdown -->
+      {% if request.user.is_authenticated %}
+      <div class="dropdown">
+        <a href="#" class="amz-header-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <span class="line1">Hello, {{ request.user.first_name|default:request.user.username }}</span>
+          <span class="line2">Account &amp; Lists ▾</span>
+        </a>
+        <div class="dropdown-menu dropdown-menu-right" style="min-width:210px;border-radius:4px;">
+          <h6 class="dropdown-header">Your Account</h6>
+          <a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user mr-2 text-muted"></i>Profile</a>
+          <a class="dropdown-item" href="{% url 'order:order_history' %}"><i class="fas fa-box mr-2 text-muted"></i>Order History</a>
+          <a class="dropdown-item" href="{% url 'wishlist:wishlist' %}"><i class="fas fa-heart mr-2 text-muted"></i>Wishlist</a>
+          <a class="dropdown-item" href="{% url 'accounts:addresses' %}"><i class="fas fa-map-marker-alt mr-2 text-muted"></i>Addresses</a>
+          <div class="dropdown-divider"></div>
+          {% if request.user.vendor.is_approved %}
+            <a class="dropdown-item" href="{% url 'vendors:dashboard' %}"><i class="fas fa-store mr-2 text-muted"></i>Seller Dashboard</a>
+          {% else %}
+            <a class="dropdown-item" href="{% url 'vendors:apply' %}"><i class="fas fa-store mr-2 text-muted"></i>Sell on ShopMart</a>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item text-danger" href="{% url 'signout' %}"><i class="fas fa-sign-out-alt mr-2"></i>Sign Out</a>
+        </div>
+      </div>
+      {% else %}
+      <a href="{% url 'signin' %}" class="amz-header-link">
+        <span class="line1">Hello, sign in</span>
+        <span class="line2">Account &amp; Lists ▾</span>
+      </a>
+      {% endif %}
+
+      <!-- Returns & Orders -->
+      <a href="{% if request.user.is_authenticated %}{% url 'order:order_history' %}{% else %}{% url 'signin' %}{% endif %}" class="amz-header-link d-none d-md-block">
+        <span class="line1">Returns</span>
+        <span class="line2">&amp; Orders</span>
+      </a>
+
+      <!-- Wishlist -->
+      <a href="{% if request.user.is_authenticated %}{% url 'wishlist:wishlist' %}{% else %}{% url 'signin' %}{% endif %}" class="amz-cart-link d-none d-md-flex" title="Wishlist">
+        <span class="amz-cart-icon-wrap">
+          <i class="far fa-heart amz-cart-icon"></i>
+          {% if wishlist_count > 0 %}<span class="amz-cart-count" style="background:var(--amz-price-red);">{{ wishlist_count }}</span>{% endif %}
+        </span>
+        <span class="amz-cart-text">Wishlist</span>
+      </a>
+
+      <!-- Cart -->
+      <a href="{% url 'cart:cart_detail' %}" class="amz-cart-link">
+        <span class="amz-cart-icon-wrap">
+          <i class="fas fa-shopping-cart amz-cart-icon"></i>
+          {% if item_count > 0 %}
+            <span class="amz-cart-count">{{ item_count }}</span>
+          {% endif %}
+        </span>
+        <span class="amz-cart-text">Cart</span>
+      </a>
+
+    </div><!-- /header-right -->
+  </div><!-- /header-main -->
+
+  <!-- ── Secondary Navigation ── -->
+  <nav class="amz-nav" aria-label="Shop categories">
+    <a href="{% url 'shop:allProdCat' %}" class="nav-all"><i class="fas fa-bars"></i> All</a>
+    <a href="{% url 'shop:allProdCat' %}" class="nav-deals">Today's Deals</a>
+    <a href="{% url 'vendors:list' %}"><i class="fas fa-store mr-1"></i>Sellers</a>
+    {% for cat in links %}
+      <a href="{{ cat.get_url }}">{{ cat.name }}</a>
+    {% endfor %}
+    {% if request.user.is_authenticated %}
+      <a href="{% url 'order:order_history' %}">Your Orders</a>
+      <a href="{% url 'wishlist:wishlist' %}"><i class="far fa-heart"></i> Wishlist</a>
+    {% else %}
+      <a href="{% url 'signin' %}">Sign In</a>
+    {% endif %}
+    <a href="{% url 'cart:cart_detail' %}">
+      <i class="fas fa-shopping-cart"></i> Cart
+      {% if item_count > 0 %}({{ item_count }}){% endif %}
+    </a>
+  </nav>
+
 </header>

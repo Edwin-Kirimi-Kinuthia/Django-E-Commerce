@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}
+
+{% block title %}My Products — {{ vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+<div class="vendor-portal-layout">
+  {% include "vendors/_sidebar.html" %}
+  <div class="vendor-portal-main">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'vendors:dashboard' %}">Dashboard</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Products</span>
+  </div>
+
+  {% if messages %}{% for msg in messages %}
+    <div class="amz-alert" style="margin-bottom:12px;{% if 'success' in msg.tags %}background:#d1fae5;border-color:#059669;{% endif %}">{{ msg }}</div>
+  {% endfor %}{% endif %}
+
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <h1 class="amz-section-title" style="margin-bottom:0;">My Products</h1>
+    <a href="{% url 'vendors:product_add' %}" class="amz-btn-buy" style="width:auto;padding:8px 18px;border-radius:20px;font-size:13px;">
+      <i class="fas fa-plus mr-1"></i> Add Product
+    </a>
+  </div>
+
+  <!-- Filter tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <a href="{% url 'vendors:product_list' %}" style="font-size:13px;padding:5px 14px;border-radius:20px;border:1px solid var(--amz-border);text-decoration:none;color:{% if not status_filter %}#fff{% else %}var(--amz-text){% endif %};background:{% if not status_filter %}var(--amz-dark){% else %}#fff{% endif %};">All</a>
+    <a href="?status=active" style="font-size:13px;padding:5px 14px;border-radius:20px;border:1px solid var(--amz-border);text-decoration:none;color:{% if status_filter == 'active' %}#fff{% else %}var(--amz-text){% endif %};background:{% if status_filter == 'active' %}var(--amz-dark){% else %}#fff{% endif %};">Active</a>
+    <a href="?status=inactive" style="font-size:13px;padding:5px 14px;border-radius:20px;border:1px solid var(--amz-border);text-decoration:none;color:{% if status_filter == 'inactive' %}#fff{% else %}var(--amz-text){% endif %};background:{% if status_filter == 'inactive' %}var(--amz-dark){% else %}#fff{% endif %};">Inactive</a>
+    <a href="?status=low_stock" style="font-size:13px;padding:5px 14px;border-radius:20px;border:1px solid var(--amz-border);text-decoration:none;color:{% if status_filter == 'low_stock' %}#fff{% else %}var(--amz-price-red){% endif %};background:{% if status_filter == 'low_stock' %}var(--amz-price-red){% else %}#fff{% endif %};">Low Stock</a>
+  </div>
+
+  {% if products %}
+  <div class="amz-order-detail-box" style="padding:0;overflow:hidden;">
+    <table class="amz-order-items-table" style="margin:0;">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="text-center">Price</th>
+          <th class="text-center">Stock</th>
+          <th class="text-center">Status</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;border:1px solid var(--amz-border);">
+              {% else %}
+                <div style="width:40px;height:40px;background:#f1f5f9;border-radius:4px;border:1px solid var(--amz-border);display:flex;align-items:center;justify-content:center;color:#ccc;"><i class="fas fa-image"></i></div>
+              {% endif %}
+              <div>
+                <div style="font-size:14px;font-weight:500;">{{ product.name }}</div>
+                <div style="font-size:12px;color:var(--amz-muted);">{{ product.category.name }}</div>
+              </div>
+            </div>
+          </td>
+          <td class="text-center">
+            <div style="font-weight:600;color:var(--amz-price-green);">{% price product.effective_price %}</div>
+            {% if product.discount_price %}<div style="font-size:12px;color:var(--amz-muted);text-decoration:line-through;">{% price product.price %}</div>{% endif %}
+          </td>
+          <td class="text-center">
+            {% if product.stock == 0 %}
+              <span style="color:#dc2626;font-weight:700;">0</span>
+            {% elif product.stock <= 5 %}
+              <span style="color:#d97706;font-weight:600;">{{ product.stock }}</span>
+            {% else %}
+              {{ product.stock }}
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {% if product.available %}
+              <span style="background:#d1fae5;color:#065f46;font-size:11px;padding:2px 10px;border-radius:10px;font-weight:600;">Active</span>
+            {% else %}
+              <span style="background:#f3f4f6;color:#6b7280;font-size:11px;padding:2px 10px;border-radius:10px;font-weight:600;">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <div style="display:flex;gap:8px;justify-content:center;">
+              <a href="{{ product.get_url }}" style="font-size:12px;color:var(--amz-link);" title="View"><i class="fas fa-eye"></i></a>
+              <a href="{% url 'vendors:product_edit' product.id %}" style="font-size:12px;color:var(--amz-orange);" title="Edit"><i class="fas fa-edit"></i></a>
+              <form method="post" action="{% url 'vendors:product_delete' product.id %}" style="display:inline;" onsubmit="return confirm('Delete {{ product.name }}?');">
+                {% csrf_token %}
+                <button type="submit" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--amz-price-red);padding:0;" title="Delete"><i class="fas fa-trash-alt"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if paginator.num_pages > 1 %}
+  <div class="amz-pagination">
+    {% if page_obj.has_previous %}<a href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">&laquo;</a>{% endif %}
+    {% for num in paginator.page_range %}
+      {% if page_obj.number == num %}<span class="current">{{ num }}</span>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}<a href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ num }}">{{ num }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?{% if status_filter %}status={{ status_filter }}&{% endif %}page={{ page_obj.next_page_number }}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div style="text-align:center;padding:48px;background:#fff;border:1px solid var(--amz-border);border-radius:4px;">
+    <div style="font-size:48px;color:#ddd;margin-bottom:12px;"><i class="fas fa-box-open"></i></div>
+    <p style="font-size:14px;color:var(--amz-muted);margin-bottom:16px;">No products yet.</p>
+    <a href="{% url 'vendors:product_add' %}" class="amz-btn-primary" style="width:auto;display:inline-block;padding:9px 24px;">Add Your First Product</a>
+  </div>
+  {% endif %}
+
+  </div><!-- /vendor-portal-main -->
+</div><!-- /vendor-portal-layout -->
+</div><!-- /container -->
+{% endblock %}

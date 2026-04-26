@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Product — {{ vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+<div class="vendor-portal-layout">
+  {% include "vendors/_sidebar.html" %}
+  <div class="vendor-portal-main">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'vendors:dashboard' %}">Dashboard</a>
+    <span class="sep">&rsaquo;</span>
+    <a href="{% url 'vendors:product_list' %}">Products</a>
+    <span class="sep">&rsaquo;</span>
+    <span>{{ action }}</span>
+  </div>
+
+  {% if messages %}{% for msg in messages %}
+    <div class="amz-alert" style="margin-bottom:12px;">{{ msg }}</div>
+  {% endfor %}{% endif %}
+
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8">
+      <div class="amz-order-detail-box">
+        <h5 style="margin-bottom:18px;">{{ action }} Product</h5>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Product Name <span style="color:var(--amz-price-red);">*</span></label>
+            <input type="text" name="name" class="form-control" value="{{ product.name|default:'' }}" required maxlength="250">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Category <span style="color:var(--amz-price-red);">*</span></label>
+            <select name="category" class="form-control" required>
+              <option value="">Select category…</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">Description</label>
+            <textarea name="description" class="form-control" rows="4">{{ product.description|default:'' }}</textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">Price (TSh) <span style="color:var(--amz-price-red);">*</span></label>
+              <input type="number" name="price" class="form-control" step="0.01" min="0"
+                     value="{{ product.price|default:'' }}" required>
+            </div>
+            <div class="col-12 col-sm-6 form-group">
+              <label style="font-size:13px;font-weight:600;">Sale Price (TSh) <span style="color:var(--amz-muted);font-weight:400;">(optional)</span></label>
+              <input type="number" name="discount_price" class="form-control" step="0.01" min="0"
+                     value="{{ product.discount_price|default:'' }}">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12 col-sm-4 form-group">
+              <label style="font-size:13px;font-weight:600;">Stock Quantity</label>
+              <input type="number" name="stock" class="form-control" min="0"
+                     value="{{ product.stock|default:'0' }}">
+            </div>
+            <div class="col-12 col-sm-4 form-group">
+              <label style="font-size:13px;font-weight:600;">Brand</label>
+              <input type="text" name="brand" class="form-control" value="{{ product.brand|default:'' }}" maxlength="250">
+            </div>
+            <div class="col-12 col-sm-4 form-group">
+              <label style="font-size:13px;font-weight:600;">Weight (kg) <span style="color:var(--amz-muted);font-weight:400;">(optional)</span></label>
+              <input type="number" name="weight" class="form-control" step="0.01" min="0"
+                     value="{{ product.weight|default:'' }}">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">SKU <span style="color:var(--amz-muted);font-weight:400;">(optional, must be unique)</span></label>
+            <input type="text" name="sku" class="form-control" value="{{ product.sku|default:'' }}" maxlength="100">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;font-weight:600;">
+              Product Image
+              {% if product and product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                     style="width:48px;height:48px;object-fit:cover;border-radius:4px;margin-left:8px;vertical-align:middle;border:1px solid var(--amz-border);">
+              {% endif %}
+            </label>
+            <input type="file" name="image" class="form-control-file" accept="image/*">
+          </div>
+
+          <div class="form-group">
+            <label style="font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" name="available" value="1"
+                     {% if not product or product.available %}checked{% endif %}
+                     style="width:16px;height:16px;">
+              <span>List product as available (visible to customers)</span>
+            </label>
+          </div>
+
+          <div style="display:flex;gap:12px;align-items:center;margin-top:8px;">
+            <button type="submit" class="amz-btn-primary" style="width:auto;padding:9px 28px;border-radius:20px;">
+              {{ action }} Product
+            </button>
+            <a href="{% url 'vendors:product_list' %}" style="font-size:14px;color:var(--amz-link);">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /vendor-portal-main -->
+</div><!-- /vendor-portal-layout -->
+</div><!-- /container -->
+{% endblock %}

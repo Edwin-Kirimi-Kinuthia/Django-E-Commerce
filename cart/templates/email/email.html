@@ -1,89 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- the meta viewport element gives the browser instructions on how to control the pages dimensions and scaling -->
-		<title>New Order #{{ transaction.id }} - Perfect Cushion Store</title>
-		<style >
-			table {
-				width: 60%;
-				margin: 0 auto;
-				border-collapse: collapse;
-			}
-			table tr td{
-				border: 1px solid #c1c1c1;
-			}
-			p {
-				padding-right: 50px;
-				padding-left: 50px;
-			}
-		</style>
-	</head>
-	<body>
-		<center>
-			<h1>Thanks for shopping with us</h1>
-			<p>This email is to confirm that you have placed an order on the Perfect Cushion Store made by Sarthak Kumar.<br>Please make sure that all the details of your order are correct.</p>
-		</center>
-		<br>
-		<table>
-			<tr>
-				<td valign="top" colspan="2" style="width: 50%;">
-					<b>Bill to:</b><br>
-					{{ transaction.billingName }}<br>
-					{{ transaction.billingAddress1 }}<br>
-					{{ transaction.billingCity }}<br>
-					{{ transaction.billingPostcode }}<br>
-					{{ transaction.billingCountry }}<br>
-				</td>
-				<td valign="top" colspan="2" style="width: 50%;">
-					<b>Order: </b>#{{ transaction.id }}<br>
-					<b>Date: </b>{{ transaction.created | date:"d M Y" }}
-				</td>
-			</tr>
-			<tr>
-				<td><b>Product Description</b></td>
-				<td><b>Qty</b></td>
-				<td><b>Unit Price</b></td>
-				<td><b>Sub-Total</b></td>
-			</tr>
-			{% for item in order_items %}
-			<tr>
-				<td>{{ item.product }}</td>
-				<td>{{ item.quantity }}</td>
-				<td>Rs{{ item.price }}</td>
-				<td>Rs{{ item.sub_total }}</td>
-			</tr>
-			{% endfor %}
-			<tr>
-				<td colspan="3" style="text-align: right;">
-					<b>Total</b>
-				</td>
-				<td>Rs{{ transaction.total }}</td>
-			</tr>
-			<tr>
-				<td colspan="3" style="text-align: right;">
-					<b>Total paid</b>
-				</td>
-				<td>Rs{{ transaction.total }}</td>
-			</tr>
-			<tr>
-				<td valign="top" colspan="2" style="width: 50%;">
-					<b>Ship to:</b><br>
-					{{ transaction.shippingName }}<br>
-					{{ transaction.shippingAddress1 }}<br>
-					{{ transaction.shippingCity }}<br>
-					{{ transaction.shippingPostcode }}<br>
-					{{ transaction.shippingCountry }}<br>
-				</td>
-				<td valign="top" colspan="2" style="width: 50%;">
-					<b>Payment details:</b><br>
-					Rs{{ transaction.total }} was paid successfully via Stripe.
-				</td>
-			</tr>
-		</table>
-		<center>
-			<br>
-			<p>If you are a registered customer and want to check your order history please <a href="http://127.0.0.1:8000/account/login/">Sign In</a>.<br>Otherwise <a href="http://127.0.0.1:8000/account/create/">Sign Up</a> to create a new account with us.</p>
-		</center>
-	</body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Confirmed #{{ transaction.id }} — ShopMart</title>
+  <style>
+    body { margin: 0; padding: 0; background: #f1f5f9; font-family: Arial, sans-serif; color: #1e293b; }
+    .wrap { max-width: 620px; margin: 32px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .header { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%); padding: 28px 32px; text-align: center; }
+    .header h1 { color: #fff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: .5px; }
+    .header p { color: #c7d2fe; margin: 6px 0 0; font-size: 14px; }
+    .body { padding: 28px 32px; }
+    .confirm-badge { background: #d1fae5; border-radius: 6px; padding: 14px 18px; margin-bottom: 22px; display: flex; align-items: center; gap: 10px; }
+    .confirm-badge .icon { font-size: 22px; color: #059669; }
+    .confirm-badge p { margin: 0; font-size: 14px; color: #065f46; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th { background: #f8fafc; padding: 10px 12px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 10px 12px; font-size: 14px; border-bottom: 1px solid #e2e8f0; }
+    .text-right { text-align: right; }
+    .total-row td { font-weight: 700; font-size: 15px; background: #f8fafc; }
+    .addr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .addr-box { background: #f8fafc; border-radius: 6px; padding: 14px 16px; font-size: 13px; line-height: 1.7; }
+    .addr-box strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #64748b; margin-bottom: 6px; }
+    .footer { background: #f8fafc; padding: 20px 32px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+    .btn { display: inline-block; background: #059669; color: #fff; text-decoration: none; padding: 10px 24px; border-radius: 20px; font-size: 14px; font-weight: 600; margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>ShopMart</h1>
+    <p>Order Confirmation</p>
+  </div>
+
+  <div class="body">
+
+    <div class="confirm-badge">
+      <div class="icon">✓</div>
+      <p><strong>Your order has been confirmed!</strong><br>We'll send you a shipping update when your items are on the way.</p>
+    </div>
+
+    <p style="font-size:14px;margin-bottom:6px;color:#64748b;">
+      Order <strong style="color:#1e1b4b;">#{{ transaction.id }}</strong> &nbsp;·&nbsp;
+      Placed on <strong>{{ transaction.created|date:"d M Y" }}</strong>
+    </p>
+
+    <!-- Items table -->
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th class="text-right">Qty</th>
+          <th class="text-right">Unit Price</th>
+          <th class="text-right">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order_items %}
+        <tr>
+          <td>{{ item.product }}</td>
+          <td class="text-right">{{ item.quantity }}</td>
+          <td class="text-right">TSh {{ item.price|floatformat:0 }}</td>
+          <td class="text-right">TSh {{ item.sub_total|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        {% if transaction.discount_amount %}
+        <tr>
+          <td colspan="3" class="text-right" style="font-size:13px;color:#059669;">Discount ({{ transaction.coupon_code }})</td>
+          <td class="text-right" style="color:#059669;">- TSh {{ transaction.discount_amount|floatformat:0 }}</td>
+        </tr>
+        {% endif %}
+        <tr class="total-row">
+          <td colspan="3" class="text-right">Total Paid</td>
+          <td class="text-right">TSh {{ transaction.total|floatformat:0 }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Addresses -->
+    <div class="addr-grid">
+      <div class="addr-box">
+        <strong>Billing Address</strong>
+        {{ transaction.billingName }}<br>
+        {{ transaction.billingAddress1 }}<br>
+        {{ transaction.billingCity }}, {{ transaction.billingPostcode }}<br>
+        {{ transaction.billingCountry }}
+      </div>
+      <div class="addr-box">
+        <strong>Shipping Address</strong>
+        {{ transaction.shippingName }}<br>
+        {{ transaction.shippingAddress1 }}<br>
+        {{ transaction.shippingCity }}, {{ transaction.shippingPostcode }}<br>
+        {{ transaction.shippingCountry }}
+      </div>
+    </div>
+
+    <p style="font-size:14px;text-align:center;margin:0;">
+      Questions about your order?<br>
+      <a href="mailto:orders@shopmart.com" style="color:#4f46e5;">orders@shopmart.com</a>
+    </p>
+
+  </div>
+
+  <div class="footer">
+    <p style="margin:0 0 8px;">Thank you for shopping with ShopMart!</p>
+    <p style="margin:0;">© ShopMart. All rights reserved.</p>
+  </div>
+
+</div>
+</body>
 </html>

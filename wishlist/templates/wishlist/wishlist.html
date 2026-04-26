@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}
+
+{% block metadescription %}Your ShopMart Wishlist{% endblock %}
+{% block title %}Wishlist — ShopMart{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Wishlist</span>
+  </div>
+
+  <h1 class="amz-section-title">
+    <i class="fas fa-heart" style="color:var(--amz-price-red);margin-right:8px;"></i>
+    My Wishlist
+    {% if items %}<span style="font-size:14px;font-weight:400;color:var(--amz-muted);margin-left:8px;">({{ items|length }} item{{ items|length|pluralize }})</span>{% endif %}
+  </h1>
+
+  {% if items %}
+  <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-4 g-4 card-grid">
+    {% for item in items %}
+    <div class="col d-flex">
+      <article class="product-card w-100">
+
+        <a href="{{ item.product.get_url }}" class="text-decoration-none text-dark">
+          <div class="card__img">
+            {% if item.product.discount_price %}<span class="card__badge">-{{ item.product.get_percent_discount }}%</span>{% endif %}
+            {% if item.product.image %}
+              <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static 'img/no-image.svg' %}" alt="{{ item.product.name }}">
+            {% endif %}
+          </div>
+        </a>
+
+        <a href="{{ item.product.get_url }}" class="card__name">{{ item.product.name }}</a>
+
+        <div class="card__content">
+          <a href="{{ item.product.get_url }}" class="card__description">{{ item.product.name }}</a>
+          {% if item.product.brand %}
+            <p class="card__specification">by {{ item.product.brand }}</p>
+          {% endif %}
+          {% star_rating item.product.average_rating %}
+          {% if item.product.review_count > 0 %}
+            <span class="review-count">({{ item.product.review_count }})</span>
+          {% endif %}
+          <div class="card__stock {% if item.product.is_low_stock %}low-stock{% elif item.product.stock == 0 %}out-of-stock-label{% endif %}">
+            {% if item.product.stock > 0 %}
+              {% if item.product.is_low_stock %}Low Stock: {{ item.product.stock }} left
+              {% else %}In Stock: {{ item.product.stock }} available{% endif %}
+            {% else %}Out of Stock{% endif %}
+          </div>
+        </div>
+
+        <div class="card__precis">
+          <div class="card__price">
+            <span class="card__preci card__preci--now">{% price item.product.effective_price %}</span>
+            {% if item.product.discount_price %}
+              <span class="card__preci card__preci--before">{% price item.product.price %}</span>
+              <span class="card__discount">-{{ item.product.get_percent_discount }}%</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card__actions">
+          <form method="post" action="{% url 'wishlist:remove' item.product.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="card__icon" title="Remove from wishlist" style="border:none;background:rgba(220,53,69,.15);">
+              <ion-icon name="heart" style="color:var(--amz-price-red);"></ion-icon>
+            </button>
+          </form>
+          <a href="{% url 'cart:add_cart' item.product.id %}" class="card__icon {% if item.product.stock == 0 %}disabled{% endif %}" title="Add to cart">
+            <ion-icon name="cart-outline"></ion-icon>
+          </a>
+          <a href="{{ item.product.get_url }}" class="card__icon" title="View product">
+            <ion-icon name="eye-outline"></ion-icon>
+          </a>
+        </div>
+
+      </article>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div style="background:#fff;border-radius:4px;padding:48px;text-align:center;border:1px solid var(--amz-border);">
+    <div style="font-size:56px;color:#ddd;margin-bottom:16px;"><i class="fas fa-heart"></i></div>
+    <h2 style="font-size:20px;font-weight:400;margin-bottom:8px;">Your wishlist is empty</h2>
+    <p style="font-size:14px;color:var(--amz-muted);margin-bottom:20px;">
+      Add items you love by clicking the <i class="far fa-heart" style="color:var(--amz-price-red);"></i> on any product.
+    </p>
+    <a href="{% url 'shop:allProdCat' %}" class="amz-btn-primary" style="width:auto;display:inline-block;padding:9px 24px;">
+      Continue Shopping
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

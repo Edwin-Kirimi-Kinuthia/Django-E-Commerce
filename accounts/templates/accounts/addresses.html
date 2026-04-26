@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Addresses — ShopMart{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <a href="{% url 'accounts:profile' %}">My Account</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Addresses</span>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="amz-alert" style="margin-bottom:16px;background:#d1fae5;border-color:#059669;">
+        <i class="fas fa-check-circle" style="color:#059669;margin-right:6px;"></i> {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+    <h1 class="amz-section-title" style="margin-bottom:0;">Your Addresses</h1>
+    <a href="{% url 'accounts:address_add' %}" class="amz-btn-primary" style="width:auto;padding:8px 20px;border-radius:20px;font-size:13px;">
+      <i class="fas fa-plus mr-1"></i> Add New Address
+    </a>
+  </div>
+
+  {% if addresses %}
+  <div class="row">
+    {% for addr in addresses %}
+    <div class="col-12 col-md-6 mb-3">
+      <div class="amz-order-detail-box" style="height:100%;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div>
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:{% if addr.address_type == 'shipping' %}var(--amz-link){% else %}var(--amz-green){% endif %};">
+              {{ addr.get_address_type_display }}
+            </span>
+            {% if addr.is_default %}
+              <span style="margin-left:8px;background:#fef3c7;color:#92400e;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Default</span>
+            {% endif %}
+          </div>
+          <div style="display:flex;gap:8px;">
+            <a href="{% url 'accounts:address_edit' addr.pk %}" style="font-size:13px;color:var(--amz-link);">Edit</a>
+            <form method="post" action="{% url 'accounts:address_delete' addr.pk %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" style="background:none;border:none;font-size:13px;color:var(--amz-price-red);cursor:pointer;padding:0;"
+                      onclick="return confirm('Remove this address?');">Remove</button>
+            </form>
+          </div>
+        </div>
+        <address style="font-size:14px;margin:0;line-height:1.7;font-style:normal;">
+          <strong>{{ addr.full_name }}</strong><br>
+          {{ addr.address_line1 }}<br>
+          {% if addr.address_line2 %}{{ addr.address_line2 }}<br>{% endif %}
+          {{ addr.city }}, {{ addr.state }}<br>
+          {{ addr.postcode }}<br>
+          {{ addr.country }}
+        </address>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="background:#fff;border:1px solid var(--amz-border);border-radius:4px;padding:40px;text-align:center;">
+    <div style="font-size:48px;color:#ddd;margin-bottom:12px;"><i class="fas fa-map-marker-alt"></i></div>
+    <p style="font-size:14px;color:var(--amz-muted);">No saved addresses yet.</p>
+    <a href="{% url 'accounts:address_add' %}" class="amz-btn-primary" style="width:auto;display:inline-block;padding:9px 24px;">
+      Add an Address
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

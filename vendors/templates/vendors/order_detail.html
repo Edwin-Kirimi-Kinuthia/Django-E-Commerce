@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% load static %}
+{% load shop_tags %}
+
+{% block title %}Order #{{ order.id }} — {{ vendor.name }}{% endblock %}
+
+{% block content %}
+<div class="amz-container py-3">
+<div class="vendor-portal-layout">
+  {% include "vendors/_sidebar.html" %}
+
+  <div class="vendor-portal-main">
+
+    <!-- Breadcrumb -->
+    <div class="amz-breadcrumb" style="margin-bottom:14px;">
+      <a href="{% url 'vendors:dashboard' %}">Dashboard</a>
+      <span class="sep">&rsaquo;</span>
+      <a href="{% url 'vendors:orders' %}">Orders</a>
+      <span class="sep">&rsaquo;</span>
+      <span>Order #{{ order.id }}</span>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}{% for msg in messages %}
+      <div class="amz-alert" style="margin-bottom:12px;{% if 'success' in msg.tags %}background:#d1fae5;border-color:#059669;{% elif 'error' in msg.tags %}background:#fee2e2;border-color:#dc2626;{% endif %}">{{ msg }}</div>
+    {% endfor %}{% endif %}
+
+    <!-- Order header row -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <div>
+        <h1 style="font-size:20px;font-weight:700;margin:0 0 4px;">Order #{{ order.id }}</h1>
+        <span style="font-size:13px;color:var(--amz-muted);">Placed {{ order.created|date:"d M Y, H:i" }}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        {% status_badge order.status %}
+
+        <!-- Quick status change: Confirm or Cancel (non-ship transitions) -->
+        {% if can_confirm %}
+        <form method="post" action="{% url 'vendors:update_order_status' order.id %}" style="display:inline;">
+          {% csrf_token %}<input type="hidden" name="status" value="confirmed">
+          <button type="submit" class="amz-btn-primary" style="width:auto;padding:5px 14px;border-radius:4px;font-size:12px;">
+            <i class="fas fa-check mr-1"></i> Confirm Order
+          </button>
+        </form>
+        {% endif %}
+        {% if can_cancel %}
+        <form method="post" action="{% url 'vendors:update_order_status' order.id %}" style="display:inline;"
+              onsubmit="return confirm('Cancel order #{{ order.id }}?');">
+          {% csrf_token %}<input type="hidden" name="status" value="cancelled">
+          <button type="submit" style="background:none;border:1px solid var(--amz-price-red);color:var(--amz-price-red);padding:5px 14px;border-radius:4px;font-size:12px;cursor:pointer;">
+            <i class="fas fa-times mr-1"></i> Cancel
+          </button>
+        </form>
+        {% endif %}
+        {% if can_deliver %}
+        <form method="post" action="{% url 'vendors:update_order_status' order.id %}" style="display:inline;">
+          {% csrf_token %}<input type="hidden" name="status" value="delivered">
+          <button type="submit" class="amz-btn-buy" style="width:auto;padding:5px 14px;border-radius:4px;font-size:12px;">
+            <i class="fas fa-box-open mr-1"></i> Mark Delivered
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Order progress timeline -->
+    <div class="amz-order-detail-box" style="padding:18px 20px;margin-bottom:16px;">
+      <div class="amz-timeline">
+        {% with s=order.status %}
+        {% comment %}Steps: placed → confirmed → shipped → delivered{% endcomment %}
+        <div class="amz-timeline-step {% if s == 'pending' %}amz-tl-active{% else %}amz-tl-done{% endif %}">
+          <div class="amz-tl-icon"><i class="fas fa-file-alt"></i></div>
+          <div class="amz-tl-label">Placed</div>
+        </div>
+        <div class="amz-timeline-step
+          {% if s == 'confirmed' %}amz-tl-active
+          {% elif s == 'shipped' or s == 'delivered' %}amz-tl-done{% endif %}">
+          <div class="amz-tl-icon"><i class="fas fa-check"></i></div>
+          <div class="amz-tl-label">Confirmed</div>
+        </div>
+        <div class="amz-timeline-step
+          {% if s == 'shipped' %}amz-tl-active
+          {% elif s == 'delivered' %}amz-tl-done{% endif %}">
+          <div class="amz-tl-icon"><i class="fas fa-shipping-fast"></i></div>
+          <div class="amz-tl-label">Shipped</div>
+        </div>
+        <div class="amz-timeline-step {% if s == 'delivered' %}amz-tl-active{% endif %}">
+          <div class="amz-tl-icon"><i class="fas fa-home"></i></div>
+          <div class="amz-tl-label">Delivered</div>
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <div class="row no-gutters" style="gap:16px;">
+
+      <!-- Left column: items + ship form / shipment info -->
+      <div class="col-12 col-md-7">
+
+        <!-- Packing checklist -->
+        <div class="amz-order-detail-box" style="margin-bottom:16px;">
+          <h5 style="font-size:15px;font-weight:700;margin-bottom:12px;">
+            <i class="fas fa-boxes mr-1" style="color:var(--amz-muted);"></i> Items to Pack
+          </h5>
+          <table class="amz-order-items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th class="text-center">Qty</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in my_items %}
+              <tr>
+                <td>
+                  <div style="font-weight:500;">{{ item.product }}</div>
+                </td>
+                <td class="text-center">
+                  <span style="font-size:16px;font-weight:700;">{{ item.quantity }}</span>
+                </td>
+                <td class="text-right">{% price item.price %}</td>
+                <td class="text-right">{% price item.sub_total %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="text-right" style="font-weight:700;padding-top:8px;">My Revenue:</td>
+                <td class="text-right" style="font-weight:700;padding-top:8px;color:var(--amz-green);">{% price my_revenue %}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Ship Now form (only when order is confirmed and not yet shipped) -->
+        {% if can_ship %}
+        <div class="amz-order-detail-box" style="border-left:4px solid var(--amz-orange);margin-bottom:16px;">
+          <h5 style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--amz-dark);">
+            <i class="fas fa-shipping-fast mr-1" style="color:var(--amz-orange);"></i> Mark as Shipped
+          </h5>
+          <p style="font-size:13px;color:var(--amz-muted);margin-bottom:14px;">
+            Fill in the carrier and tracking details before dispatching. A shipping confirmation email will be sent to the customer automatically.
+          </p>
+          <form method="post" action="{% url 'vendors:ship_order' order.id %}">
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label style="font-size:13px;font-weight:600;">Carrier <span style="color:var(--amz-price-red);">*</span></label>
+              <select name="carrier" class="form-control" id="carrierSelect" required>
+                <option value="">— Select carrier —</option>
+                {% for val, label in carrier_choices %}
+                  <option value="{{ val }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group" id="carrier_other_group" style="display:none;">
+              <label style="font-size:13px;font-weight:600;">Carrier Name</label>
+              <input type="text" name="carrier_other" class="form-control" placeholder="e.g. ABC Logistics">
+            </div>
+
+            <div class="row">
+              <div class="col-12 col-sm-6 form-group">
+                <label style="font-size:13px;font-weight:600;">Tracking Number</label>
+                <input type="text" name="tracking_number" class="form-control" placeholder="e.g. TZ123456789">
+                <small style="color:var(--amz-muted);">Leave blank if no tracking available.</small>
+              </div>
+              <div class="col-12 col-sm-6 form-group">
+                <label style="font-size:13px;font-weight:600;">Estimated Delivery</label>
+                <input type="date" name="estimated_delivery" class="form-control">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label style="font-size:13px;font-weight:600;">Tracking URL</label>
+              <input type="url" name="tracking_url" class="form-control" placeholder="https://track.example.com/...">
+              <small style="color:var(--amz-muted);">Optional — included in customer email as a direct link.</small>
+            </div>
+
+            <div class="form-group">
+              <label style="font-size:13px;font-weight:600;">Packing Notes <span style="font-weight:400;color:var(--amz-muted);">(internal)</span></label>
+              <textarea name="notes" class="form-control" rows="2" placeholder="e.g. Fragile items packed with bubble wrap, shipped in 2 boxes."></textarea>
+            </div>
+
+            <button type="submit" class="amz-btn-primary" style="width:auto;padding:9px 24px;border-radius:4px;">
+              <i class="fas fa-paper-plane mr-1"></i> Confirm Shipment &amp; Notify Customer
+            </button>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- Shipment info (already shipped) -->
+        {% if shipment %}
+        <div class="amz-order-detail-box" style="border-left:4px solid var(--amz-green);margin-bottom:16px;">
+          <h5 style="font-size:15px;font-weight:700;margin-bottom:12px;color:var(--amz-green);">
+            <i class="fas fa-shipping-fast mr-1"></i> Shipment Details
+          </h5>
+          <div class="row">
+            <div class="col-12 col-sm-6" style="margin-bottom:10px;">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--amz-muted);font-weight:700;margin-bottom:3px;">Carrier</div>
+              <div style="font-size:14px;font-weight:600;">{{ shipment.carrier_display }}</div>
+            </div>
+            {% if shipment.tracking_number %}
+            <div class="col-12 col-sm-6" style="margin-bottom:10px;">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--amz-muted);font-weight:700;margin-bottom:3px;">Tracking Number</div>
+              <div style="font-size:14px;font-weight:700;letter-spacing:.04em;">{{ shipment.tracking_number }}</div>
+            </div>
+            {% endif %}
+            <div class="col-12 col-sm-6" style="margin-bottom:10px;">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--amz-muted);font-weight:700;margin-bottom:3px;">Shipped On</div>
+              <div style="font-size:14px;">{{ shipment.shipped_at|date:"d M Y, H:i" }}</div>
+            </div>
+            {% if shipment.estimated_delivery %}
+            <div class="col-12 col-sm-6" style="margin-bottom:10px;">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--amz-muted);font-weight:700;margin-bottom:3px;">Est. Delivery</div>
+              <div style="font-size:14px;">{{ shipment.estimated_delivery|date:"d M Y" }}</div>
+            </div>
+            {% endif %}
+          </div>
+          {% if shipment.tracking_url %}
+          <a href="{{ shipment.tracking_url }}" target="_blank" class="amz-btn-cart" style="width:auto;padding:6px 16px;border-radius:4px;font-size:13px;display:inline-block;margin-top:4px;">
+            <i class="fas fa-external-link-alt mr-1"></i> Track Package
+          </a>
+          {% endif %}
+          {% if shipment.notes %}
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--amz-border);">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--amz-muted);font-weight:700;margin-bottom:4px;">Packing Notes</div>
+            <p style="font-size:13px;margin:0;color:var(--amz-text);">{{ shipment.notes }}</p>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div><!-- /left col -->
+
+      <!-- Right column: customer & ship-to -->
+      <div class="col-12 col-md-5">
+
+        <!-- Customer info -->
+        <div class="amz-order-detail-box" style="font-size:13px;margin-bottom:16px;">
+          <h5 style="font-size:14px;font-weight:700;margin-bottom:10px;"><i class="fas fa-user mr-1" style="color:var(--amz-muted);"></i> Customer</h5>
+          <p style="margin:0 0 3px;font-weight:600;">{{ order.billingName }}</p>
+          <p style="margin:0;"><a href="mailto:{{ order.emailAddress }}" style="color:var(--amz-link);">{{ order.emailAddress }}</a></p>
+        </div>
+
+        <!-- Ship-to address -->
+        <div class="amz-order-detail-box" style="font-size:13px;margin-bottom:16px;">
+          <h5 style="font-size:14px;font-weight:700;margin-bottom:10px;"><i class="fas fa-map-marker-alt mr-1" style="color:var(--amz-muted);"></i> Ship To</h5>
+          {% if order.shippingName %}
+          <p style="margin:0 0 2px;font-weight:600;">{{ order.shippingName }}</p>
+          <p style="margin:0 0 2px;">{{ order.shippingAddress1 }}</p>
+          <p style="margin:0 0 2px;">{{ order.shippingCity }}{% if order.shippingState %}, {{ order.shippingState }}{% endif %} {{ order.shippingPostcode }}</p>
+          <p style="margin:0;">{{ order.shippingCountry }}</p>
+          {% else %}
+          <p style="color:var(--amz-muted);">No shipping address on file.</p>
+          {% endif %}
+        </div>
+
+        <!-- Order summary box -->
+        <div class="amz-order-detail-box" style="font-size:13px;margin-bottom:0;">
+          <h5 style="font-size:14px;font-weight:700;margin-bottom:10px;"><i class="fas fa-receipt mr-1" style="color:var(--amz-muted);"></i> Order Summary</h5>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="color:var(--amz-muted);">Order Total</span>
+            <strong>{% price order.total %}</strong>
+          </div>
+          {% if order.discount_amount %}
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+            <span style="color:var(--amz-muted);">Discount ({{ order.coupon_code }})</span>
+            <span style="color:var(--amz-green);">- {% price order.discount_amount %}</span>
+          </div>
+          {% endif %}
+          <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--amz-border);margin-top:6px;">
+            <span style="font-weight:700;">My Revenue</span>
+            <strong style="color:var(--amz-green);">{% price my_revenue %}</strong>
+          </div>
+        </div>
+
+      </div><!-- /right col -->
+
+    </div><!-- /row -->
+
+    <div style="margin-top:14px;">
+      <a href="{% url 'vendors:orders' %}" style="font-size:13px;color:var(--amz-link);">
+        <i class="fas fa-arrow-left mr-1"></i> Back to Orders
+      </a>
+    </div>
+
+  </div><!-- /vendor-portal-main -->
+</div><!-- /vendor-portal-layout -->
+</div><!-- /container -->
+
+<script>
+// Show/hide "Other carrier" text input
+document.addEventListener('DOMContentLoaded', function () {
+  const sel = document.getElementById('carrierSelect');
+  const grp = document.getElementById('carrier_other_group');
+  if (sel && grp) {
+    sel.addEventListener('change', function () {
+      grp.style.display = this.value === 'other' ? '' : 'none';
+    });
+  }
+});
+</script>
+{% endblock %}

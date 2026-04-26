@@ -1,30 +1,73 @@
-{% load staticfiles %} <!-- to load css file from staticfiles directory -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<meta name="description" content="{% block metadescription %}{% endblock %}">
-	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
- <!-- getting font Roboto from google fonts -->
-	<link rel="stylesheet" href="{% static 'css/custom.css' %}"> <!-- because we want custom.css to have priority over css gotten from bootstrap site -->
-	<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-	<link rel="stylesheet" type="text/css" href="{% static 'css/fontawesome-all.min.css' %}"> <!-- Adding Font Awesome all.min.css file. Font Awesome is a font and icon toolkit based on CSS and LESS -->
-	<title>{% block title %}{% endblock %}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="{% block metadescription %}ShopMart — The best deals online{% endblock %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/fontawesome-all.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/amazon.css' %}">
+  <title>{% block title %}ShopMart{% endblock %}</title>
 </head>
 <body>
-	<div class="container">
-		<div class="container-fluid bg-light navbar-fixed-top my_top_navbar_div"> <!-- Adding a top navbar for signup and signin -->
-			{% include 'top-navbar.html' %}
-		</div>
-		{% include 'header.html' %}
-		{% include 'navbar.html' %}
-		{% block content %}
-		{% endblock %}
-	</div>
-		{% include 'footer.html' %}
-	<script src="{% static 'js/jquery-3.2.1.slim.min.js' %}"></script>
-	<script src="{% static 'js/popper.min.js' %}"></script>
-	<script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+  {% include 'header.html' %}
+
+  <div class="amz-page">
+    {% block content %}{% endblock %}
+  </div>
+
+  {% include 'footer.html' %}
+
+  <script src="{% static 'js/jquery-3.2.1.slim.min.js' %}"></script>
+  <script src="{% static 'js/popper.min.js' %}"></script>
+  <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script type="module" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule="" src="https://unpkg.com/ionicons@5.0.0/dist/ionicons/ionicons.js"></script>
+  {% block extra_js %}{% endblock %}
+
+  <script>
+    // Thumbnail image switcher
+    function switchImage(src) {
+      var main = document.getElementById('main-product-image');
+      if (main) main.src = src;
+      document.querySelectorAll('.amz-thumb').forEach(function(t) {
+        t.classList.toggle('active', t.src === src);
+      });
+    }
+
+    // Featured products strip scroll buttons
+    (function() {
+      var track = document.getElementById('featured-track');
+      if (!track) return;
+      var cardW = 172; // 160px card + 12px gap
+      document.querySelector('.amz-featured-prev') && document.querySelector('.amz-featured-prev').addEventListener('click', function() {
+        track.scrollBy({ left: -cardW * 3, behavior: 'smooth' });
+      });
+      document.querySelector('.amz-featured-next') && document.querySelector('.amz-featured-next').addEventListener('click', function() {
+        track.scrollBy({ left: cardW * 3, behavior: 'smooth' });
+      });
+    })();
+
+    // Star rating picker
+    document.querySelectorAll('.amz-star-picker').forEach(function(picker) {
+      var labels = picker.querySelectorAll('label');
+      labels.forEach(function(lbl, idx) {
+        lbl.addEventListener('mouseenter', function() {
+          labels.forEach(function(l, i) { l.classList.toggle('hovered', i <= idx); });
+        });
+        lbl.addEventListener('mouseleave', function() {
+          labels.forEach(function(l) { l.classList.remove('hovered'); });
+        });
+        lbl.addEventListener('click', function() {
+          lbl.querySelector('input').checked = true;
+          labels.forEach(function(l, i) { l.classList.toggle('selected', i <= idx); });
+        });
+      });
+    });
+  </script>
 </body>
 </html>

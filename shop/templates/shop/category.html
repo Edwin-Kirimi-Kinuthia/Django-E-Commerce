@@ -1,73 +1,265 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
+{% load shop_tags %}
 
-{% block metadescription %}
-	{% if category %}
-		{{ category.description|truncatewords:155 }}
-	{% else %}
-		Welcome to the Perfect Cushion, the E-Commerce store for cushions.
-	{% endif %}
-{% endblock %}
-
-{% block title %}
-	{% if category %}
-		{{ category.name }} - Perfect Cushion
-	{% else %}
-		See our Cushion Collection - Perfect Cushion
-	{% endif %}
-{% endblock %}
+{% block metadescription %}{% if category %}{{ category.description|truncatewords:155 }}{% else %}Shop the best deals on ShopMart.{% endif %}{% endblock %}
+{% block title %}{% if category %}{{ category.name }}{% else %}Best Sellers{% endif %} — ShopMart{% endblock %}
 
 {% block content %}
-	<!--Breadcrumb navigation-->
-	{% if category %}
-		<div class="row my_row_class">
-			<div class="mx-auto">
-				<p> <a href="{% url 'shop:allProdCat' %}">Our Product Collection</a> | {{category.name}} </p> 
-			</div>
-		</div>
-	{% endif %}
-	<div class="mx-auto">
-	{% if category %}
-		<img class="my_image" src="{{ category.image.url }}" alt="{{ category.name }}">
-	</div>
-	<br>
-	<div>
-		<h1 class="text-center my_title">{{category.name}}</h1>
-		<p class="text-justify">{{category.description}}</p>
-	</div>
-	{% else %}
-		<img class="my_image my_image_padding" src="{% static 'img/banner.jpg' %}" alt="Our Products Collection" >
-	</div>
-	<br>
-	<div>
-		<h1 class="text-center my_title">Our Products Collection</h1>
-		<p class="text-justify">A long cushion description its uses etc. A long cushion description its uses etc. A long cushion description its uses etc. A long cushion description its uses etc. A long cushion description its uses etc. A long cushion description its uses etc. A long cushion description its uses etc. A long cushion description its uses etc.</p>
-	</div>
-	{% endif %}
-	<div class="container">
-		<div class="row mx-auto">
-			{% for product in products.object_list %}
-				<div class="my_bottom_margin col-9 col-sm-12 col-md-4 col-md-12 col-lg-4"> <!-- using custom class and bootstrap grid classes to change div and making category page more interactive -->
-					<div class="card text-center" style="min-width: 18rem;"> <!-- using bootstrap card classes to put all the products in cards -->
-						<a href="{{ product.get_url }}"> <img class="card-img-top my_image" src="{{product.image.url}}" alt="{{product.name}}" > </a> <!-- So that when we click on any product image in a specific category we can go to the products details --> <!-- in img tag the classes are used to store images inside the cards -->
-						<div class="card-body">
-							<h4>{{ product.name }}</h4>
-							<p> Rs{{product.price}} </p>
-						</div>
-					</div>
-				</div>
-			{% endfor %}
-		</div>
-		<div class="mx-auto">
-			{% if products.paginator.num_pages > 1 %} <!-- if more than one page required only then will pagination div will show -->
-				<hr>
-				<div class="text-center">
-					{% for pg in products.paginator.page_range %}
-						<a href="?page={{pg}}" class="btn btn-light btn-sm {% if products.number == pg %}active{% endif %}"> {{pg}} </a>
-					{% endfor %}
-				</div>
-			{% endif %}
-		</div>
-		<br>	
-	</div>
+<div class="amz-container py-3">
+
+  <!-- Breadcrumb -->
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    {% if category %}
+      <span class="sep">&rsaquo;</span>
+      <span>{{ category.name }}</span>
+    {% endif %}
+  </div>
+
+  <!-- ── Homepage Carousel ── -->
+  {% if not category %}
+  {% if slides %}
+  <div id="shopmart-carousel" class="carousel slide amz-carousel mb-3" data-ride="carousel" data-interval="4500" data-pause="hover">
+
+    <!-- Indicators -->
+    <ol class="carousel-indicators">
+      {% for slide in slides %}{% if slide.image %}
+      <li data-target="#shopmart-carousel" data-slide-to="{{ forloop.counter0 }}"
+          {% if forloop.first %}class="active"{% endif %}></li>
+      {% endif %}{% endfor %}
+    </ol>
+
+    <!-- Slides -->
+    <div class="carousel-inner">
+      {% for slide in slides %}{% if slide.image %}
+      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+        <a href="{{ slide.link }}" class="amz-carousel-link">
+          <img src="{{ slide.image.url }}" class="d-block amz-carousel-img" alt="{{ slide.title }}">
+          <div class="carousel-caption amz-carousel-caption">
+            <h2 class="carousel-title">{{ slide.title }}</h2>
+            {% if slide.subtitle %}<p class="carousel-subtitle">{{ slide.subtitle }}</p>{% endif %}
+            <span class="carousel-cta">{{ slide.cta_text }} <i class="fas fa-arrow-right ml-1"></i></span>
+          </div>
+        </a>
+      </div>
+      {% endif %}{% endfor %}
+    </div>
+
+    <!-- Controls -->
+    <a class="carousel-control-prev" href="#shopmart-carousel" role="button" data-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="sr-only">Previous</span>
+    </a>
+    <a class="carousel-control-next" href="#shopmart-carousel" role="button" data-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="sr-only">Next</span>
+    </a>
+  </div>
+  {% else %}
+  <!-- Fallback static banner when no slides configured -->
+  <div class="amz-hero mb-3">
+    <img src="{% static 'img/banner.jpg' %}" alt="Today's Deals on ShopMart">
+    <div class="amz-hero-gradient"></div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- ── Featured Products Row (homepage only) ── -->
+  {% if not category and featured_products %}
+  <div class="amz-featured-section mb-3">
+    <div class="amz-featured-header">
+      <h2 class="amz-section-title" style="margin-bottom:0;">
+        <i class="fas fa-bolt" style="color:var(--amz-orange);margin-right:6px;"></i>Featured Products
+      </h2>
+      <a href="{% url 'shop:allProdCat' %}" style="font-size:13px;color:var(--amz-link);">See all</a>
+    </div>
+    <div class="amz-featured-track-wrap">
+      <button class="amz-featured-nav amz-featured-prev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+      <div class="amz-featured-track" id="featured-track">
+        {% for product in featured_products %}
+        <div class="amz-featured-card" style="position:relative;">
+          {% if product.discount_price %}<span style="position:absolute;top:8px;right:8px;background:var(--amz-price-red);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:1rem;z-index:3;">-{{ product.get_percent_discount }}%</span>{% endif %}
+          <a href="{{ product.get_url }}">
+            <div class="card-img-wrap">
+              {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+              {% else %}
+                <img src="{% static 'img/no-image.svg' %}" alt="{{ product.name }}">
+              {% endif %}
+            </div>
+          </a>
+          <a href="{{ product.get_url }}" class="card-name">{{ product.name }}</a>
+          <div class="card-price">
+            {% price product.effective_price %}
+            {% if product.discount_price %}<span class="price-old">{% price product.price %}</span>{% endif %}
+          </div>
+          {% if product.stock > 0 %}
+            <a href="{% url 'cart:add_cart' product.id %}" class="btn-add-cart" style="font-size:12px;padding:5px;">
+              <i class="fas fa-cart-plus"></i> Add to Cart
+            </a>
+          {% else %}
+            <span class="out-of-stock">Out of Stock</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <button class="amz-featured-nav amz-featured-next" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="row no-gutters" style="gap:0;">
+
+    <!-- ── Sidebar ── -->
+    <div class="col-12 col-md-3 pr-md-3 mb-3">
+      <div class="amz-sidebar">
+
+        <div class="amz-sidebar-section">
+          <h6>Department</h6>
+          <a href="{% url 'shop:allProdCat' %}" class="{% if not category %}active{% endif %}">All Products</a>
+          {% for cat in links %}
+            <a href="{{ cat.get_url }}" class="{% if category.slug == cat.slug %}active{% endif %}">{{ cat.name }}</a>
+          {% endfor %}
+        </div>
+
+        <div class="amz-sidebar-section">
+          <h6>Price</h6>
+          <a href="?{% if category %}{% endif %}max_price=50000">Under TSh 50,000</a>
+          <a href="?min_price=50000&max_price=150000">TSh 50,000 – 150,000</a>
+          <a href="?min_price=150000&max_price=300000">TSh 150,000 – 300,000</a>
+          <a href="?min_price=300000">Over TSh 300,000</a>
+        </div>
+
+        <div class="amz-sidebar-section">
+          <h6>Customer Reviews</h6>
+          <a href="#" class="star-filter"><span class="amz-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i></span> &amp; Up</a>
+          <a href="#" class="star-filter"><span class="amz-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i></span> &amp; Up</a>
+          <a href="#" class="star-filter"><span class="amz-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i></span> &amp; Up</a>
+        </div>
+
+        <div class="amz-sidebar-section">
+          <h6>Availability</h6>
+          <a href="?in_stock=true">In Stock</a>
+          <a href="?">All</a>
+        </div>
+
+      </div>
+    </div><!-- /sidebar -->
+
+    <!-- ── Product Grid ── -->
+    <div class="col-12 col-md-9">
+
+      <!-- Section heading -->
+      {% if category %}
+        <h1 class="amz-section-title">{{ category.name }}</h1>
+        {% if category.description %}
+          <p style="font-size:14px;color:var(--amz-muted);margin-bottom:12px;">{{ category.description }}</p>
+        {% endif %}
+      {% else %}
+        <h1 class="amz-section-title">Best Sellers</h1>
+      {% endif %}
+
+      <!-- Results info -->
+      <div class="amz-results-header">
+        <strong>{{ products.paginator.count }}</strong> result{{ products.paginator.count|pluralize }} in
+        <strong>{% if category %}{{ category.name }}{% else %}All Products{% endif %}</strong>
+      </div>
+
+      <!-- Grid -->
+      <div class="row row-cols-2 row-cols-sm-3 row-cols-xl-4 g-4 card-grid">
+        {% for product in products.object_list %}
+        <div class="col d-flex">
+          <article class="product-card w-100">
+            <a href="{{ product.get_url }}" class="text-decoration-none text-dark">
+              <div class="card__img">
+                {% if product.discount_price %}<span class="card__badge">-{{ product.get_percent_discount }}%</span>{% endif %}
+                {% if product.image %}
+                  <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                {% else %}
+                  <img src="{% static 'img/no-image.svg' %}" alt="{{ product.name }}">
+                {% endif %}
+              </div>
+            </a>
+
+            <!-- Vertical sliding name tab -->
+            <a href="{{ product.get_url }}" class="card__name">{{ product.name }}</a>
+
+            <div class="card__content">
+              <a href="{{ product.get_url }}" class="card__description">{{ product.name }}</a>
+              {% if product.brand %}
+                <p class="card__specification">by {{ product.brand }}</p>
+              {% endif %}
+              {% star_rating product.average_rating %}
+              {% if product.review_count > 0 %}
+                <span class="review-count">({{ product.review_count }})</span>
+              {% endif %}
+              <div class="card__stock {% if product.is_low_stock %}low-stock{% elif product.stock == 0 %}out-of-stock-label{% endif %}">
+                {% if product.stock > 0 %}
+                  {% if product.is_low_stock %}
+                    Low Stock: {{ product.stock }} left
+                  {% else %}
+                    In Stock: {{ product.stock }} available
+                  {% endif %}
+                {% else %}
+                  Out of Stock
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card__precis">
+              <div class="card__price">
+                <span class="card__preci card__preci--now">{% price product.effective_price %}</span>
+                {% if product.discount_price %}
+                  <span class="card__preci card__preci--before">{% price product.price %}</span>
+                  <span class="card__discount">-{{ product.get_percent_discount }}%</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="card__actions">
+              {% if request.user.is_authenticated %}
+                <form method="post" action="{% url 'wishlist:toggle' product.id %}" style="display:contents;">{% csrf_token %}
+                  <button type="submit" class="card__icon" title="Wishlist"><ion-icon name="heart-outline"></ion-icon></button>
+                </form>
+              {% else %}
+                <a href="{% url 'signin' %}" class="card__icon" title="Sign in to wishlist"><ion-icon name="heart-outline"></ion-icon></a>
+              {% endif %}
+              <a href="{% url 'cart:add_cart' product.id %}" class="card__icon {% if product.stock == 0 %}disabled{% endif %}" title="Add to cart"><ion-icon name="cart-outline"></ion-icon></a>
+              <a href="{{ product.get_url }}" class="card__icon" title="View product"><ion-icon name="eye-outline"></ion-icon></a>
+            </div>
+          </article>
+        </div>
+        {% empty %}
+        <div class="col-12">
+          <div class="amz-no-results">
+            <h2>No products found</h2>
+            <p style="color:var(--amz-muted);">Try adjusting your filters or <a href="{% url 'shop:allProdCat' %}">browse all products</a>.</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div><!-- /card-grid -->
+
+      <!-- Pagination -->
+      {% if products.paginator.num_pages > 1 %}
+      <div class="amz-pagination">
+        {% if products.has_previous %}
+          <a href="?page={{ products.previous_page_number }}">&laquo; Prev</a>
+        {% endif %}
+        {% for pg in products.paginator.page_range %}
+          {% if products.number == pg %}
+            <span class="current">{{ pg }}</span>
+          {% else %}
+            <a href="?page={{ pg }}">{{ pg }}</a>
+          {% endif %}
+        {% endfor %}
+        {% if products.has_next %}
+          <a href="?page={{ products.next_page_number }}">Next &raquo;</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div><!-- /product grid -->
+  </div><!-- /row -->
+</div><!-- /container -->
 {% endblock %}

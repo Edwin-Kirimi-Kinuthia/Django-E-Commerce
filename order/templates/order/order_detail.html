@@ -1,77 +1,132 @@
 {% extends "base.html" %}
-{% load staticfiles %}
+{% load static %}
+{% load shop_tags %}
 
-{% block metadescription %}
-	This is the Order Details page. Here is your order in detail.
-{% endblock %}
-
-{% block title %}
-	Order Details - The Perfect Cushion Store
-{% endblock %}
+{% block metadescription %}Order #{{ order.id }} Details — ShopMart{% endblock %}
+{% block title %}Order #{{ order.id }} — ShopMart{% endblock %}
 
 {% block content %}
-	<div>
-		<div class="text-center">
-			<br>
-			<h1 class="text-center my_title">Order Details</h1>
-			<br>
-			<table class="table table-bordered">
-				<tr>
-					<td class="text-left" colspan="2">
-						<b>Order: </b>#{{ order.id }}<br>
-						<b>Date: </b>{{ order.created|date:"d M Y" }}<br>
-						<b>Order Total: </b>Rs{{ order.total }}<br>
-						<b>Order Status: </b><i class="fas fa-check"></i> Complete
-					</td>
-					<td class="text-left" colspan="2">
-						<b>Billing Address</b><br>
-						{{ order.billingName }}<br>
-						{{ order.billingAddress1 }}<br>
-						{{ order.billingCity }}, {{ order.billingState }}<br>
-						{{ order.billingPostcode }}<br>
-						{{ order.billingCountry  }}<br>
-					</td>
-				</tr>
-				<tr>
-					<td><b>Product Description</b></td>
-					<td><b>Qty</b></td>
-					<td><b>Unit Price</b></td>
-					<td><b>Sub-Total</b></td>
-				</tr>
-				{% for item in order_items %}
-					<tr>
-						<td>{{ item.product }}</td>
-						<td>{{ item.quantity }}</td>
-						<td>Rs{{ item.price }}</td>
-						<td>Rs{{ item.sub_total }}</td>
-					</tr>
-				{% endfor %}
-				<tr>
-					<td class="text-right" colspan="3"><b>Total</b></td>
-					<td>${{ order.total }}</td>
-				</tr>
-				<tr>
-					<td class="text-right" colspan="3"><b>Total Paid</b></td>
-					<td>${{ order.total }}</td>
-				</tr>
-				<tr>
-					<td class="text-left" colspan="2">
-						<b>Shipping Address: </b><br>
-						{{ order.shippingName }}<br>
-						{{ order.shippingAddress1 }}<br>
-						{{ order.shippingCity }}, {{ order.shippingState }}<br>
-						{{ order.shippingPostcode }}<br>
-						{{ order.shippingContry }}<br>
-					</td>
-					<td class="text-left" colspan="2">
-						<b>Payment Details: </b><br>
-						The order #{{ order.id }} has been paid succesfully via Stripe.
-					</td>
-				</tr>
-			</table>
-			<button class="btn btn-secondary" onclick="window.print();"><i class="fas fa-print"></i>Print Order</button> <!-- Adding onclick="window.print()" so if the person clicks on the button the person can see the print dialog box to print the orderS -->
-		</div>
-	</div>
-	<br>
-	<br>
+<div class="amz-container py-3">
+
+  <div class="amz-breadcrumb">
+    <a href="{% url 'shop:allProdCat' %}">Home</a>
+    <span class="sep">&rsaquo;</span>
+    <a href="{% url 'order:order_history' %}">Your Orders</a>
+    <span class="sep">&rsaquo;</span>
+    <span>Order #{{ order.id }}</span>
+  </div>
+
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div>
+      <h1 style="font-size:24px;font-weight:400;margin-bottom:4px;">Order Details</h1>
+      <div style="font-size:14px;color:var(--amz-muted);">
+        Order placed <strong>{{ order.created|date:"d M Y" }}</strong> &nbsp;|&nbsp;
+        Order # <strong>{{ order.id }}</strong> &nbsp;|&nbsp;
+        {% status_badge order.status %}
+      </div>
+    </div>
+    <button class="amz-btn-primary" style="width:auto;padding:8px 18px;border-radius:20px;" onclick="window.print()">
+      <i class="fas fa-print mr-1"></i> Print Order
+    </button>
+  </div>
+
+  <!-- ── Tracking Timeline ── -->
+  <div class="amz-order-detail-box mb-3">
+    <h5 style="margin-bottom:16px;">Order Tracking</h5>
+    <div class="amz-timeline">
+      {% for step in timeline %}
+      <div class="amz-timeline-step amz-tl-{{ step.state }}">
+        <div class="amz-tl-icon"><i class="{{ step.icon }}"></i></div>
+        <div class="amz-tl-label">{{ step.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="row">
+
+    <!-- ── Items ── -->
+    <div class="col-12 col-md-8 mb-3">
+      <div class="amz-order-detail-box">
+        <h5>Ordered Items</h5>
+        <table class="amz-order-items-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th class="text-center">Qty</th>
+              <th class="text-right">Unit Price</th>
+              <th class="text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order_items %}
+            <tr>
+              <td>{{ item.product }}</td>
+              <td class="text-center">{{ item.quantity }}</td>
+              <td class="text-right">{% price item.price %}</td>
+              <td class="text-right">{% price item.sub_total %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            {% if order.discount_amount %}
+            <tr>
+              <td colspan="3" class="text-right">Discount ({{ order.coupon_code }})</td>
+              <td class="text-right" style="color:var(--amz-green);">- {% price order.discount_amount %}</td>
+            </tr>
+            {% endif %}
+            <tr>
+              <td colspan="3" class="text-right">Order Total</td>
+              <td class="text-right">{% price order.total %}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Addresses & Payment ── -->
+    <div class="col-12 col-md-4">
+
+      <div class="amz-order-detail-box mb-3">
+        <h5>Shipping Address</h5>
+        <address style="font-size:14px;margin:0;line-height:1.7;">
+          <strong>{{ order.shippingName }}</strong><br>
+          {{ order.shippingAddress1 }}<br>
+          {{ order.shippingCity }}, {{ order.shippingState }}<br>
+          {{ order.shippingPostcode }}<br>
+          {{ order.shippingCountry }}
+        </address>
+      </div>
+
+      <div class="amz-order-detail-box mb-3">
+        <h5>Billing Address</h5>
+        <address style="font-size:14px;margin:0;line-height:1.7;">
+          <strong>{{ order.billingName }}</strong><br>
+          {{ order.billingAddress1 }}<br>
+          {{ order.billingCity }}, {{ order.billingState }}<br>
+          {{ order.billingPostcode }}<br>
+          {{ order.billingCountry }}
+        </address>
+      </div>
+
+      <div class="amz-order-detail-box">
+        <h5>Payment Information</h5>
+        <div style="font-size:14px;">
+          <div><i class="fab fa-stripe" style="font-size:20px;color:#6772e5;"></i> Paid via Stripe</div>
+          <div style="margin-top:6px;color:var(--amz-green);"><i class="fas fa-check-circle"></i> Payment confirmed</div>
+          <div style="margin-top:4px;font-size:13px;color:var(--amz-muted);">{{ order.emailAddress }}</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mt-2">
+    <a href="{% url 'order:order_history' %}" style="font-size:14px;color:var(--amz-link);">
+      <i class="fas fa-arrow-left"></i> Back to Your Orders
+    </a>
+  </div>
+
+</div>
 {% endblock %}

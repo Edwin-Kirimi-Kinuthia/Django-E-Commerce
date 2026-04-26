@@ -1,4 +1,34 @@
-django
-django-crispy-forms
-stripe
+# Core
+Django>=5.2,<6.0
 Pillow
+
+# REST API
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+
+# Auth
+django-allauth
+dj-rest-auth[with_social]
+
+# Configuration
+python-decouple
+
+# Forms
+django-crispy-forms
+crispy-bootstrap4
+
+# Payment
+stripe
+
+# Database
+psycopg2-binary
+
+# Filtering
+django-filter
+
+# API docs
+drf-spectacular
+
+# Admin UI
+django-jazzmin
